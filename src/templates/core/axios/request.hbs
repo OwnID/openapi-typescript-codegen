@@ -95,7 +95,13 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 				resolve(result.body);
 			}
 		} catch (error) {
-			reject(new ApiError(options, { url, ok: false, status: 0, statusText: '', body: "" }, String(error)));
+			reject(error instanceof ApiError ? error : new ApiError(options, {
+				url,
+				ok: false,
+				status: 0,
+				statusText: '',
+				body: ""
+			}, String(error)));
 		}
 	});
 };
