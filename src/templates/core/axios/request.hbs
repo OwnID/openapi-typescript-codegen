@@ -71,8 +71,8 @@ import type { OpenAPIConfig } from './OpenAPI';
  */
 export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): CancelablePromise<T> => {
 	return new CancelablePromise(async (resolve, reject, onCancel) => {
+		const url = getUrl(config, options);
 		try {
-			const url = getUrl(config, options);
 			const formData = getFormData(options);
 			const body = getRequestBody(options);
 			const headers = await getHeaders(config, options, formData);
@@ -95,7 +95,7 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 				resolve(result.body);
 			}
 		} catch (error) {
-			reject(error);
+			reject(new ApiError(options, { url, ok: false, status: 0, statusText: '', body: "" }, String(error)));
 		}
 	});
 };
