@@ -100,8 +100,8 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 				ok: false,
 				status: 0,
 				statusText: '',
-				body: ""
-			}, String(error)));
+				body: JSON.stringify(error)
+			}, JSON.stringify(error)));
 		}
 	});
 };
