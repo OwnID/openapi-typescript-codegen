@@ -59,7 +59,7 @@ export const getModel = (
         return model;
     }
 
-    if (definition.enum && definition.type !== 'boolean' && definition.type !== 'integer') {
+    if (definition.enum && definition.type !== 'boolean' && (definition.type !== 'integer' || definition.description === undefined)) {
         const enumerators = getEnum(definition.enum);
         const extendedEnumerators = extendEnum(enumerators, definition);
         if (extendedEnumerators.length) {
