@@ -88,7 +88,12 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 					status: response.status,
 					statusText: response.statusText,
 					body: responseHeader ?? responseBody,
+					headers: response.headers,
 				};
+
+				if (response.headers["Location"]) {
+					throw new ApiError(options, result, "redirect")
+				}
 
 				catchErrorCodes(options, result);
 
@@ -100,7 +105,8 @@ export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): C
 				ok: false,
 				status: 0,
 				statusText: '',
-				body: JSON.stringify(error)
+				body: JSON.stringify(error),
+				headers: {},
 			}, JSON.stringify(error)));
 		}
 	});
