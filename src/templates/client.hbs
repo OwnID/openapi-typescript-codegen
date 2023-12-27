@@ -36,7 +36,7 @@ import { {{{name}}}{{{@root.postfix}}} } from './services/{{{name}}}{{{@root.pos
 				PASSWORD: OpenAPI?.PASSWORD,
 				HEADERS: OpenAPI?.HEADERS,
 				ENCODE_PATH: OpenAPI?.ENCODE_PATH,
-				DEFAULT_TIMEOUT: OpenAPI?.DEFAULT_TIMEOUT,
+				DEFAULT_TIMEOUT_MILLISEC: OpenAPI?.DEFAULT_TIMEOUT_MILLISEC,
 			} as OpenAPIConfig,
 		},
 		{
@@ -71,7 +71,7 @@ export class {{{clientName}}} {
 			PASSWORD: config?.PASSWORD,
 			HEADERS: config?.HEADERS,
 			ENCODE_PATH: config?.ENCODE_PATH,
-			DEFAULT_TIMEOUT: config?.DEFAULT_TIMEOUT,
+			DEFAULT_TIMEOUT_MILLISEC: config?.DEFAULT_TIMEOUT_MILLISEC,
 		});
 
 		{{#each services}}
