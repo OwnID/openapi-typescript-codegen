@@ -4019,7 +4019,7 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":30,"column":31},"end":{"line":30,"column":37}} ), depth0)) != null ? stack1 : "")
     + "',\n				VERSION: OpenAPI?.VERSION ?? '"
     + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":31,"column":37},"end":{"line":31,"column":44}} ), depth0)) != null ? stack1 : "")
-    + "',\n				WITH_CREDENTIALS: OpenAPI?.WITH_CREDENTIALS ?? false,\n				CREDENTIALS: OpenAPI?.CREDENTIALS ?? 'include',\n				TOKEN: OpenAPI?.TOKEN,\n				USERNAME: OpenAPI?.USERNAME,\n				PASSWORD: OpenAPI?.PASSWORD,\n				HEADERS: OpenAPI?.HEADERS,\n				ENCODE_PATH: OpenAPI?.ENCODE_PATH,\n				DEFAULT_TIMEOUT: OpenAPI?.DEFAULT_TIMEOUT,\n			} as OpenAPIConfig,\n		},\n		{\n			provide: BaseHttpRequest,\n			useClass: AngularHttpRequest,\n		},\n"
+    + "',\n				WITH_CREDENTIALS: OpenAPI?.WITH_CREDENTIALS ?? false,\n				CREDENTIALS: OpenAPI?.CREDENTIALS ?? 'include',\n				TOKEN: OpenAPI?.TOKEN,\n				USERNAME: OpenAPI?.USERNAME,\n				PASSWORD: OpenAPI?.PASSWORD,\n				HEADERS: OpenAPI?.HEADERS,\n				ENCODE_PATH: OpenAPI?.ENCODE_PATH,\n				DEFAULT_TIMEOUT_MILLISEC: OpenAPI?.DEFAULT_TIMEOUT_MILLISEC,\n			} as OpenAPIConfig,\n		},\n		{\n			provide: BaseHttpRequest,\n			useClass: AngularHttpRequest,\n		},\n"
     + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":46,"column":2},"end":{"line":48,"column":11}}})) != null ? stack1 : "")
     + "	]\n})\nexport class "
     + ((stack1 = alias2(alias1(depth0, "clientName", {"start":{"line":51,"column":16},"end":{"line":51,"column":26}} ), depth0)) != null ? stack1 : "")
@@ -4054,7 +4054,7 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":65,"column":29},"end":{"line":65,"column":35}} ), depth0)) != null ? stack1 : "")
     + "',\n			VERSION: config?.VERSION ?? '"
     + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":66,"column":35},"end":{"line":66,"column":42}} ), depth0)) != null ? stack1 : "")
-    + "',\n			WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,\n			CREDENTIALS: config?.CREDENTIALS ?? 'include',\n			TOKEN: config?.TOKEN,\n			USERNAME: config?.USERNAME,\n			PASSWORD: config?.PASSWORD,\n			HEADERS: config?.HEADERS,\n			ENCODE_PATH: config?.ENCODE_PATH,\n			DEFAULT_TIMEOUT: config?.DEFAULT_TIMEOUT,\n		});\n\n"
+    + "',\n			WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,\n			CREDENTIALS: config?.CREDENTIALS ?? 'include',\n			TOKEN: config?.TOKEN,\n			USERNAME: config?.USERNAME,\n			PASSWORD: config?.PASSWORD,\n			HEADERS: config?.HEADERS,\n			ENCODE_PATH: config?.ENCODE_PATH,\n			DEFAULT_TIMEOUT_MILLISEC: config?.DEFAULT_TIMEOUT_MILLISEC,\n		});\n\n"
     + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":77,"column":2},"end":{"line":79,"column":11}}})) != null ? stack1 : "")
     + "	}\n}\n";
 },"12":function(container,depth0,helpers,partials,data) {
@@ -4265,7 +4265,7 @@ var axiosRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,h
 },"usePartial":true,"useData":true};
 
 var axiosSendRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "export const sendRequest = async <T>(\n	config: OpenAPIConfig,\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Record<string, string>,\n	onCancel: OnCancel,\n	axiosClient: AxiosInstance\n): Promise<AxiosResponse<T>> => {\n	const source = axios.CancelToken.source();\n\n	const requestConfig: AxiosRequestConfig = {\n		url,\n		headers,\n		data: body ?? formData,\n		method: options.method,\n		withCredentials: config.WITH_CREDENTIALS,\n		responseType: options.responseType,\n		cancelToken: source.token,\n		timeout: config.DEFAULT_TIMEOUT,\n	};\n\n	onCancel(() => source.cancel('The user aborted a request.'));\n\n	try {\n		return await axiosClient.request(requestConfig);\n	} catch (error) {\n		const axiosError = error as AxiosError<T>;\n		if (axiosError.response) {\n			return axiosError.response;\n		}\n		throw error;\n	}\n};";
+    return "export const sendRequest = async <T>(\n	config: OpenAPIConfig,\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Record<string, string>,\n	onCancel: OnCancel,\n	axiosClient: AxiosInstance\n): Promise<AxiosResponse<T>> => {\n	const source = axios.CancelToken.source();\n\n	const requestConfig: AxiosRequestConfig = {\n		url,\n		headers,\n		data: body ?? formData,\n		method: options.method,\n		withCredentials: config.WITH_CREDENTIALS,\n		responseType: options.responseType,\n		cancelToken: source.token,\n		timeout: config.DEFAULT_TIMEOUT_MILLISEC,\n	};\n\n	onCancel(() => source.cancel('The user aborted a request.'));\n\n	try {\n		return await axiosClient.request(requestConfig);\n	} catch (error) {\n		const axiosError = error as AxiosError<T>;\n		if (axiosError.response) {\n			return axiosError.response;\n		}\n		throw error;\n	}\n};";
 },"useData":true};
 
 var templateCoreBaseHttpRequest = {"1":function(container,depth0,helpers,partials,data) {
@@ -4531,11 +4531,11 @@ var templateCoreSettings = {"compiler":[8,">= 4.3.0"],"main":function(container,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport type OpenAPIConfig = {\n	BASE: string;\n	VERSION: string;\n	WITH_CREDENTIALS: boolean;\n	CREDENTIALS: 'include' | 'omit' | 'same-origin';\n	TOKEN?: string | Resolver<string> | undefined;\n	USERNAME?: string | Resolver<string> | undefined;\n	PASSWORD?: string | Resolver<string> | undefined;\n	HEADERS?: Headers | Resolver<Headers> | undefined;\n	ENCODE_PATH?: ((path: string) => string) | undefined;\n	DEFAULT_TIMEOUT?: number | undefined;\n};\n\nexport const OpenAPI: OpenAPIConfig = {\n	BASE: '"
+    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport type OpenAPIConfig = {\n	BASE: string;\n	VERSION: string;\n	WITH_CREDENTIALS: boolean;\n	CREDENTIALS: 'include' | 'omit' | 'same-origin';\n	TOKEN?: string | Resolver<string> | undefined;\n	USERNAME?: string | Resolver<string> | undefined;\n	PASSWORD?: string | Resolver<string> | undefined;\n	HEADERS?: Headers | Resolver<Headers> | undefined;\n	ENCODE_PATH?: ((path: string) => string) | undefined;\n	DEFAULT_TIMEOUT_MILLISEC?: number | undefined;\n};\n\nexport const OpenAPI: OpenAPIConfig = {\n	BASE: '"
     + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":22,"column":11},"end":{"line":22,"column":17}} ), depth0)) != null ? stack1 : "")
     + "',\n	VERSION: '"
     + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":23,"column":14},"end":{"line":23,"column":21}} ), depth0)) != null ? stack1 : "")
-    + "',\n	WITH_CREDENTIALS: false,\n	CREDENTIALS: 'include',\n	TOKEN: undefined,\n	USERNAME: undefined,\n	PASSWORD: undefined,\n	HEADERS: undefined,\n	ENCODE_PATH: undefined,\n	DEFAULT_TIMEOUT: undefined,\n};";
+    + "',\n	WITH_CREDENTIALS: false,\n	CREDENTIALS: 'include',\n	TOKEN: undefined,\n	USERNAME: undefined,\n	PASSWORD: undefined,\n	HEADERS: undefined,\n	ENCODE_PATH: undefined,\n	DEFAULT_TIMEOUT_MILLISEC: undefined,\n};";
 },"usePartial":true,"useData":true};
 
 var templateCoreRequest = {"1":function(container,depth0,helpers,partials,data) {
