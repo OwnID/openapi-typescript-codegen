@@ -4019,10 +4019,10 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":30,"column":31},"end":{"line":30,"column":37}} ), depth0)) != null ? stack1 : "")
     + "',\n				VERSION: OpenAPI?.VERSION ?? '"
     + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":31,"column":37},"end":{"line":31,"column":44}} ), depth0)) != null ? stack1 : "")
-    + "',\n				WITH_CREDENTIALS: OpenAPI?.WITH_CREDENTIALS ?? false,\n				CREDENTIALS: OpenAPI?.CREDENTIALS ?? 'include',\n				TOKEN: OpenAPI?.TOKEN,\n				USERNAME: OpenAPI?.USERNAME,\n				PASSWORD: OpenAPI?.PASSWORD,\n				HEADERS: OpenAPI?.HEADERS,\n				ENCODE_PATH: OpenAPI?.ENCODE_PATH,\n			} as OpenAPIConfig,\n		},\n		{\n			provide: BaseHttpRequest,\n			useClass: AngularHttpRequest,\n		},\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":45,"column":2},"end":{"line":47,"column":11}}})) != null ? stack1 : "")
+    + "',\n				WITH_CREDENTIALS: OpenAPI?.WITH_CREDENTIALS ?? false,\n				CREDENTIALS: OpenAPI?.CREDENTIALS ?? 'include',\n				TOKEN: OpenAPI?.TOKEN,\n				USERNAME: OpenAPI?.USERNAME,\n				PASSWORD: OpenAPI?.PASSWORD,\n				HEADERS: OpenAPI?.HEADERS,\n				ENCODE_PATH: OpenAPI?.ENCODE_PATH,\n				DEFAULT_TIMEOUT: OpenAPI?.DEFAULT_TIMEOUT,\n			} as OpenAPIConfig,\n		},\n		{\n			provide: BaseHttpRequest,\n			useClass: AngularHttpRequest,\n		},\n"
+    + ((stack1 = lookupProperty(helpers,"each").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":46,"column":2},"end":{"line":48,"column":11}}})) != null ? stack1 : "")
     + "	]\n})\nexport class "
-    + ((stack1 = alias2(alias1(depth0, "clientName", {"start":{"line":50,"column":16},"end":{"line":50,"column":26}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "clientName", {"start":{"line":51,"column":16},"end":{"line":51,"column":26}} ), depth0)) != null ? stack1 : "")
     + " {}\n";
 },"9":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4033,8 +4033,8 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     };
 
   return "		"
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":46,"column":5},"end":{"line":46,"column":9}} ), depth0)) != null ? stack1 : "")
-    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":46,"column":15},"end":{"line":46,"column":28}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":47,"column":5},"end":{"line":47,"column":9}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":47,"column":15},"end":{"line":47,"column":28}} ), depth0)) != null ? stack1 : "")
     + ",\n";
 },"11":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda, alias3=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4045,17 +4045,17 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     };
 
   return "type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;\n\nexport class "
-    + ((stack1 = alias2(alias1(depth0, "clientName", {"start":{"line":54,"column":16},"end":{"line":54,"column":26}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "clientName", {"start":{"line":55,"column":16},"end":{"line":55,"column":26}} ), depth0)) != null ? stack1 : "")
     + " {\n\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(12, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":56,"column":1},"end":{"line":58,"column":10}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(12, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":57,"column":1},"end":{"line":59,"column":10}}})) != null ? stack1 : "")
     + "\n	public readonly request: BaseHttpRequest;\n\n	constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = "
-    + ((stack1 = alias2(alias1(depth0, "httpRequest", {"start":{"line":62,"column":87},"end":{"line":62,"column":98}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "httpRequest", {"start":{"line":63,"column":87},"end":{"line":63,"column":98}} ), depth0)) != null ? stack1 : "")
     + ") {\n		this.request = new HttpRequest({\n			BASE: config?.BASE ?? '"
-    + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":64,"column":29},"end":{"line":64,"column":35}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":65,"column":29},"end":{"line":65,"column":35}} ), depth0)) != null ? stack1 : "")
     + "',\n			VERSION: config?.VERSION ?? '"
-    + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":65,"column":35},"end":{"line":65,"column":42}} ), depth0)) != null ? stack1 : "")
-    + "',\n			WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,\n			CREDENTIALS: config?.CREDENTIALS ?? 'include',\n			TOKEN: config?.TOKEN,\n			USERNAME: config?.USERNAME,\n			PASSWORD: config?.PASSWORD,\n			HEADERS: config?.HEADERS,\n			ENCODE_PATH: config?.ENCODE_PATH,\n		});\n\n"
-    + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":75,"column":2},"end":{"line":77,"column":11}}})) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":66,"column":35},"end":{"line":66,"column":42}} ), depth0)) != null ? stack1 : "")
+    + "',\n			WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,\n			CREDENTIALS: config?.CREDENTIALS ?? 'include',\n			TOKEN: config?.TOKEN,\n			USERNAME: config?.USERNAME,\n			PASSWORD: config?.PASSWORD,\n			HEADERS: config?.HEADERS,\n			ENCODE_PATH: config?.ENCODE_PATH,\n			DEFAULT_TIMEOUT: config?.DEFAULT_TIMEOUT,\n		});\n\n"
+    + ((stack1 = lookupProperty(helpers,"each").call(alias3,lookupProperty(depth0,"services"),{"name":"each","hash":{},"fn":container.program(14, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":77,"column":2},"end":{"line":79,"column":11}}})) != null ? stack1 : "")
     + "	}\n}\n";
 },"12":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4066,10 +4066,10 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     };
 
   return "	public readonly "
-    + ((stack1 = lookupProperty(helpers,"camelCase").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"name"),{"name":"camelCase","hash":{},"data":data,"loc":{"start":{"line":57,"column":17},"end":{"line":57,"column":37}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"camelCase").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"name"),{"name":"camelCase","hash":{},"data":data,"loc":{"start":{"line":58,"column":17},"end":{"line":58,"column":37}}})) != null ? stack1 : "")
     + ": "
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":57,"column":42},"end":{"line":57,"column":46}} ), depth0)) != null ? stack1 : "")
-    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":57,"column":52},"end":{"line":57,"column":65}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":58,"column":42},"end":{"line":58,"column":46}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":58,"column":52},"end":{"line":58,"column":65}} ), depth0)) != null ? stack1 : "")
     + ";\n";
 },"14":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=container.strict, alias2=container.lambda, lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4080,10 +4080,10 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     };
 
   return "		this."
-    + ((stack1 = lookupProperty(helpers,"camelCase").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"name"),{"name":"camelCase","hash":{},"data":data,"loc":{"start":{"line":76,"column":7},"end":{"line":76,"column":27}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"camelCase").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"name"),{"name":"camelCase","hash":{},"data":data,"loc":{"start":{"line":78,"column":7},"end":{"line":78,"column":27}}})) != null ? stack1 : "")
     + " = new "
-    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":76,"column":37},"end":{"line":76,"column":41}} ), depth0)) != null ? stack1 : "")
-    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":76,"column":47},"end":{"line":76,"column":60}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(depth0, "name", {"start":{"line":78,"column":37},"end":{"line":78,"column":41}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = alias2(alias1(lookupProperty(data,"root"), "postfix", {"start":{"line":78,"column":47},"end":{"line":78,"column":60}} ), depth0)) != null ? stack1 : "")
     + "(this.request);\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -4099,7 +4099,7 @@ var templateClient = {"1":function(container,depth0,helpers,partials,data) {
     + "\n"
     + ((stack1 = lookupProperty(helpers,"if").call(alias1,lookupProperty(depth0,"services"),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":17,"column":0},"end":{"line":21,"column":7}}})) != null ? stack1 : "")
     + "\n"
-    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(lookupProperty(data,"root"),"httpClient"),"angular",{"name":"equals","hash":{},"fn":container.program(8, data, 0),"inverse":container.program(11, data, 0),"data":data,"loc":{"start":{"line":23,"column":0},"end":{"line":80,"column":11}}})) != null ? stack1 : "");
+    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(lookupProperty(data,"root"),"httpClient"),"angular",{"name":"equals","hash":{},"fn":container.program(8, data, 0),"inverse":container.program(11, data, 0),"data":data,"loc":{"start":{"line":23,"column":0},"end":{"line":82,"column":11}}})) != null ? stack1 : "");
 },"usePartial":true,"useData":true};
 
 var angularGetHeaders = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -4265,7 +4265,7 @@ var axiosRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,h
 },"usePartial":true,"useData":true};
 
 var axiosSendRequest = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "export const sendRequest = async <T>(\n	config: OpenAPIConfig,\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Record<string, string>,\n	onCancel: OnCancel,\n	axiosClient: AxiosInstance\n): Promise<AxiosResponse<T>> => {\n	const source = axios.CancelToken.source();\n\n	const requestConfig: AxiosRequestConfig = {\n		url,\n		headers,\n		data: body ?? formData,\n		method: options.method,\n		withCredentials: config.WITH_CREDENTIALS,\n		responseType: options.responseType,\n		cancelToken: source.token,\n	};\n\n	onCancel(() => source.cancel('The user aborted a request.'));\n\n	try {\n		return await axiosClient.request(requestConfig);\n	} catch (error) {\n		const axiosError = error as AxiosError<T>;\n		if (axiosError.response) {\n			return axiosError.response;\n		}\n		throw error;\n	}\n};";
+    return "export const sendRequest = async <T>(\n	config: OpenAPIConfig,\n	options: ApiRequestOptions,\n	url: string,\n	body: any,\n	formData: FormData | undefined,\n	headers: Record<string, string>,\n	onCancel: OnCancel,\n	axiosClient: AxiosInstance\n): Promise<AxiosResponse<T>> => {\n	const source = axios.CancelToken.source();\n\n	const requestConfig: AxiosRequestConfig = {\n		url,\n		headers,\n		data: body ?? formData,\n		method: options.method,\n		withCredentials: config.WITH_CREDENTIALS,\n		responseType: options.responseType,\n		cancelToken: source.token,\n		timeout: config.DEFAULT_TIMEOUT,\n	};\n\n	onCancel(() => source.cancel('The user aborted a request.'));\n\n	try {\n		return await axiosClient.request(requestConfig);\n	} catch (error) {\n		const axiosError = error as AxiosError<T>;\n		if (axiosError.response) {\n			return axiosError.response;\n		}\n		throw error;\n	}\n};";
 },"useData":true};
 
 var templateCoreBaseHttpRequest = {"1":function(container,depth0,helpers,partials,data) {
@@ -4531,11 +4531,11 @@ var templateCoreSettings = {"compiler":[8,">= 4.3.0"],"main":function(container,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport type OpenAPIConfig = {\n	BASE: string;\n	VERSION: string;\n	WITH_CREDENTIALS: boolean;\n	CREDENTIALS: 'include' | 'omit' | 'same-origin';\n	TOKEN?: string | Resolver<string> | undefined;\n	USERNAME?: string | Resolver<string> | undefined;\n	PASSWORD?: string | Resolver<string> | undefined;\n	HEADERS?: Headers | Resolver<Headers> | undefined;\n	ENCODE_PATH?: ((path: string) => string) | undefined;\n};\n\nexport const OpenAPI: OpenAPIConfig = {\n	BASE: '"
-    + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":21,"column":11},"end":{"line":21,"column":17}} ), depth0)) != null ? stack1 : "")
+    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport type OpenAPIConfig = {\n	BASE: string;\n	VERSION: string;\n	WITH_CREDENTIALS: boolean;\n	CREDENTIALS: 'include' | 'omit' | 'same-origin';\n	TOKEN?: string | Resolver<string> | undefined;\n	USERNAME?: string | Resolver<string> | undefined;\n	PASSWORD?: string | Resolver<string> | undefined;\n	HEADERS?: Headers | Resolver<Headers> | undefined;\n	ENCODE_PATH?: ((path: string) => string) | undefined;\n	DEFAULT_TIMEOUT?: number | undefined;\n};\n\nexport const OpenAPI: OpenAPIConfig = {\n	BASE: '"
+    + ((stack1 = alias2(alias1(depth0, "server", {"start":{"line":22,"column":11},"end":{"line":22,"column":17}} ), depth0)) != null ? stack1 : "")
     + "',\n	VERSION: '"
-    + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":22,"column":14},"end":{"line":22,"column":21}} ), depth0)) != null ? stack1 : "")
-    + "',\n	WITH_CREDENTIALS: false,\n	CREDENTIALS: 'include',\n	TOKEN: undefined,\n	USERNAME: undefined,\n	PASSWORD: undefined,\n	HEADERS: undefined,\n	ENCODE_PATH: undefined,\n};";
+    + ((stack1 = alias2(alias1(depth0, "version", {"start":{"line":23,"column":14},"end":{"line":23,"column":21}} ), depth0)) != null ? stack1 : "")
+    + "',\n	WITH_CREDENTIALS: false,\n	CREDENTIALS: 'include',\n	TOKEN: undefined,\n	USERNAME: undefined,\n	PASSWORD: undefined,\n	HEADERS: undefined,\n	ENCODE_PATH: undefined,\n	DEFAULT_TIMEOUT: undefined,\n};";
 },"usePartial":true,"useData":true};
 
 var templateCoreRequest = {"1":function(container,depth0,helpers,partials,data) {

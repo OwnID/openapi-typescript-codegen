@@ -18,6 +18,7 @@ export const sendRequest = async <T>(
 		withCredentials: config.WITH_CREDENTIALS,
 		responseType: options.responseType,
 		cancelToken: source.token,
+		timeout: config.DEFAULT_TIMEOUT,
 	};
 
 	onCancel(() => source.cancel('The user aborted a request.'));
