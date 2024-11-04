@@ -7,6 +7,12 @@ export const createAngularProject = (dir: string, name: string) => {
     mkdirSync(cwd, {
         recursive: true,
     });
+
+    sync('ng', ['analytics', 'off', '--global'], {
+        cwd: resolvePath(cwd),
+        stdio: 'inherit',
+    });
+
     sync(
         'ng',
         [
@@ -21,6 +27,8 @@ export const createAngularProject = (dir: string, name: string) => {
             '--inline-template',
             'true',
             '--routing',
+            'false',
+            '--ssr',
             'false',
             '--skip-tests',
             'true',

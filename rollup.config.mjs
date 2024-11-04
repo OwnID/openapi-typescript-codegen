@@ -1,10 +1,10 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 import { readFileSync } from 'fs';
 import handlebars from 'handlebars';
 import { dirname, extname, resolve } from 'path';
-import { terser } from 'rollup-plugin-terser';
 
 const { precompile } = handlebars;
 
@@ -71,6 +71,6 @@ export default {
         file: './dist/index.js',
         format: 'cjs',
     },
-    external: ['camelcase', 'commander', 'fs-extra', 'handlebars', 'json-schema-ref-parser'],
+    external: ['camelcase', 'commander', 'fs-extra', 'handlebars', '@apidevtools/json-schema-ref-parser'],
     plugins: getPlugins(),
 };

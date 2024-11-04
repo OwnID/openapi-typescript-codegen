@@ -1,9 +1,24 @@
+# Important announcement
+
+> [!IMPORTANT] 
+> Please migrate your projects to use [@hey-api/openapi-ts](https://github.com/hey-api/openapi-ts)
+
+Due to time limitations on my end, this project has been unmaintained for a while now. The `@hey-api/openapi-ts`
+project started as a fork with the goal to resolve the most pressing issues. going forward they are planning to
+maintain the OpenAPI generator and give it the love it deserves. Please support them with their work and make
+sure to migrate your projects: https://heyapi.dev/openapi-ts/migrating.html#openapi-typescript-codegen
+
+- All open PR's and issues will be archived on the 1st of May 2024
+- All versions of this package will be deprecated in NPM
+
+👋 Thanks for all the support, downloads and love! Cheers Ferdi.
+
+---
+
 # OpenAPI Typescript Codegen
 
 [![NPM][npm-image]][npm-url]
 [![License][license-image]][license-url]
-[![Coverage][coverage-image]][coverage-url]
-[![Coverage][coverage-image]][coverage-url]
 [![Downloads][downloads-image]][downloads-url]
 [![Build][build-image]][build-url]
 
@@ -57,42 +72,21 @@ $ openapi --help
     $ openapi --input ./spec.json --output ./generated --client xhr
 ```
 
-## Docker usage
-
-To build the Docker container, execute the following command:
-
-```
-docker build . --tag openapi-typescript-codegen
-```
-
-After this is done, you can execute the CLI commands:
-
-```
-docker run openapi-typescript-codegen --help
-docker run openapi-typescript-codegen --input sample.yaml --output client
-```
-
 Documentation
 ===
-- [Basic usage](docs/basic-usage.md)
-- [OpenAPI object](docs/openapi-object.md)
-- [Client instances](docs/client-instances.md) `--name`
-- [Argument vs. Object style](docs/arguments-vs-object-style.md) `--useOptions`
-- [Enums vs. Union types](docs/enum-vs-union-types.md) `--useUnionTypes`
-- [Runtime schemas](docs/runtime-schemas.md) `--exportSchemas`
-- [Enum with custom names and descriptions](docs/custom-enums.md)
-- [Nullable props (OpenAPI v2)](docs/nullable-props.md)
-- [Authorization](docs/authorization.md)
-- [External references](docs/external-references.md)
-- [Canceling requests](docs/canceling-requests.md)
-- [Custom request file](docs/custom-request-file.md)
 
-Support
+The main documentation can be found in the [openapi-typescript-codegen/wiki](https://github.com/ferdikoomen/openapi-typescript-codegen/wiki)
+
+Sponsors
 ===
-- [Babel support](docs/babel-support.md)
-- [Axios support](docs/axios-support.md)
-- [Angular support](docs/angular-support.md)
-- [Node-Fetch support](docs/node-fetch-support.md)
+
+If you or your company use the OpenAPI Typescript Codegen, please consider supporting me. By sponsoring I can free up time to give this project some love! Details can be found here: https://github.com/sponsors/ferdikoomen
+
+If you're from an enterprise looking for a fully managed SDK generation, please consider our sponsor:
+
+<a href="https://speakeasyapi.dev/?utm_source=ferdi+repo&utm_medium=github+sponsorship">
+    <img alt="speakeasy" src="https://storage.googleapis.com/speakeasy-design-assets/ferdi-sponsorship.png" width="640"/>
+</a>
 
 [npm-url]: https://npmjs.org/package/openapi-typescript-codegen
 [npm-image]: https://img.shields.io/npm/v/openapi-typescript-codegen.svg
@@ -102,5 +96,5 @@ Support
 [coverage-image]: https://img.shields.io/codecov/c/github/ferdikoomen/openapi-typescript-codegen.svg
 [downloads-url]: http://npm-stat.com/charts.html?package=openapi-typescript-codegen
 [downloads-image]: http://img.shields.io/npm/dm/openapi-typescript-codegen.svg
-[build-url]: https://circleci.com/gh/ferdikoomen/openapi-typescript-codegen/tree/master
-[build-image]: https://circleci.com/gh/ferdikoomen/openapi-typescript-codegen/tree/master.svg?style=svg
+[build-url]: https://circleci.com/gh/ferdikoomen/openapi-typescript-codegen/tree/main
+[build-image]: https://circleci.com/gh/ferdikoomen/openapi-typescript-codegen/tree/main.svg?style=svg
