@@ -76,10 +76,10 @@ export const request = <T>(client: Client, options: ApiRequestOptions): Cancelab
 
 				const result: ApiResult<T> = {
 					url,
-					ok: response.ok,
-					status: response.status,
-					statusText: response.statusText,
-					headers,
+					type: response.ok ? 'success' : 'failure',
+					httpCode: response.status,
+					httpCodeText: response.statusText,
+					responseHeaders: headers,
 					body: resultBody,
 					error: catchErrorCodes(options, response.ok, response.status, response.statusText, resultBody),
 				};
@@ -89,11 +89,11 @@ export const request = <T>(client: Client, options: ApiRequestOptions): Cancelab
 		} catch (error) {
 			resolve({
 				url,
-				ok: false,
-				status: 0,
-				statusText: 'Unknown',
+				type: 'failure',
+				httpCode: 0,
+				httpCodeText: '',
 				body: JSON.stringify(error) as T,
-				headers,
+				responseHeaders: headers,
 				error,
 			});
 		}

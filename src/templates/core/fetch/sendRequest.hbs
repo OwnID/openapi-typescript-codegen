@@ -1,3 +1,45 @@
+interface ClearableSignal extends AbortSignal {
+  clear: () => void
+}
+
+function anySignal (signals: Array<AbortSignal | undefined | null>): ClearableSignal {
+  const controller = new globalThis.AbortController()
+
+  function onAbort (): void {
+    controller.abort()
+
+    for (const signal of signals) {
+      if (signal?.removeEventListener != null) {
+        signal.removeEventListener('abort', onAbort)
+      }
+    }
+  }
+
+  for (const signal of signals) {
+    if (signal?.aborted === true) {
+      onAbort()
+      break
+    }
+
+    if (signal?.addEventListener != null) {
+      signal.addEventListener('abort', onAbort)
+    }
+  }
+
+  function clear (): void {
+    for (const signal of signals) {
+      if (signal?.removeEventListener != null) {
+        signal.removeEventListener('abort', onAbort)
+      }
+    }
+  }
+
+  const signal = controller.signal as ClearableSignal
+  signal.clear = clear
+
+  return signal
+}
+
 export const sendRequest = async (
 	client: Client,
 	options: ApiRequestOptions,
@@ -8,12 +50,18 @@ export const sendRequest = async (
 	onCancel: OnCancel
 ): Promise<Response> => {
 	const controller = new AbortController();
+	const signal = client.timeoutMsec
+		? anySignal([
+			controller.signal,
+			AbortSignal.timeout(client.timeoutMsec)
+		])
+		: controller.signal;
 
 	const request: RequestInit = {
 		headers,
 		body: body ?? formData,
 		method: options.method,
-		signal: controller.signal,
+		signal,
 	};
 
 	onCancel(() => controller.abort());

@@ -1,11 +1,11 @@
 {{>header}}
 
-export type ApiResult<T> = {
+export interface ApiResult<T> {
 	readonly url: string;
-	readonly ok: boolean;
-	readonly status: number;
-	readonly statusText: string;
-	readonly headers: Headers;
-	readonly body: T;
+	readonly type: 'success' | 'failure';
+	readonly httpCode: number;
+	readonly httpCodeText: string;
+	readonly responseHeaders: Headers;
+	readonly body: T | undefined;
 	readonly error: any | undefined;
 };
