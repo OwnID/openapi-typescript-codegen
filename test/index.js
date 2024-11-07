@@ -11,7 +11,7 @@ const generate = async (input, output) => {
         useOptions: true,
         useUnionTypes: false,
         exportCore: true,
-        exportSchemas: true,
+        exportSchemas: false,
         exportModels: true,
         exportServices: true,
         // clientName: 'Demo',
@@ -57,8 +57,8 @@ const generateRealWorldSpecs = async () => {
 };
 
 const main = async () => {
-    await generate('./test/spec/v2.json', './test/generated/v2/');
-    await generate('./test/spec/v3.json', './test/generated/v3/');
+    //await generate('./test/spec/v2.json', './test/generated/v2/');
+    await generate('/Users/liri/ownid/workspace/src/api/auth-server.openapi.yaml', '/Users/liri/ownid/workspace/src/sdk/ts/auth-server-api/src');
     // await generateRealWorldSpecs();
 };
 

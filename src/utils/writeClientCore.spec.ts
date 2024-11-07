@@ -21,7 +21,6 @@ describe('writeClientCore', () => {
 
         const templates: Templates = {
             index: () => 'index',
-            client: () => 'client',
             exports: {
                 model: () => 'model',
                 schema: () => 'schema',
@@ -29,20 +28,16 @@ describe('writeClientCore', () => {
             },
             core: {
                 settings: () => 'settings',
-                apiError: () => 'apiError',
                 apiRequestOptions: () => 'apiRequestOptions',
                 apiResult: () => 'apiResult',
                 cancelablePromise: () => 'cancelablePromise',
                 request: () => 'request',
-                baseHttpRequest: () => 'baseHttpRequest',
-                httpRequest: () => 'httpRequest',
             },
         };
 
         await writeClientCore(client, templates, '/', HttpClient.FETCH, Indent.SPACE_4);
 
         expect(writeFile).toBeCalledWith(resolve('/', '/OpenAPI.ts'), `settings${EOL}`);
-        expect(writeFile).toBeCalledWith(resolve('/', '/ApiError.ts'), `apiError${EOL}`);
         expect(writeFile).toBeCalledWith(resolve('/', '/ApiRequestOptions.ts'), `apiRequestOptions${EOL}`);
         expect(writeFile).toBeCalledWith(resolve('/', '/ApiResult.ts'), `apiResult${EOL}`);
         expect(writeFile).toBeCalledWith(resolve('/', '/CancelablePromise.ts'), `cancelablePromise${EOL}`);

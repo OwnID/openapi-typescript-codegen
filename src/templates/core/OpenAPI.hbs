@@ -5,28 +5,11 @@ import type { ApiRequestOptions } from './ApiRequestOptions';
 type Resolver<T> = (options: ApiRequestOptions) => Promise<T>;
 type Headers = Record<string, string>;
 
-export type OpenAPIConfig = {
-	BASE: string;
-	VERSION: string;
-	WITH_CREDENTIALS: boolean;
-	CREDENTIALS: 'include' | 'omit' | 'same-origin';
-	TOKEN?: string | Resolver<string> | undefined;
-	USERNAME?: string | Resolver<string> | undefined;
-	PASSWORD?: string | Resolver<string> | undefined;
-	HEADERS?: Headers | Resolver<Headers> | undefined;
-	ENCODE_PATH?: ((path: string) => string) | undefined;
-	DEFAULT_TIMEOUT_MILLISEC?: number | undefined;
-};
+export const DEFAULT_BASE_URL = '{{{server}}}';
 
-export const OpenAPI: OpenAPIConfig = {
-	BASE: '{{{server}}}',
-	VERSION: '{{{version}}}',
-	WITH_CREDENTIALS: false,
-	CREDENTIALS: 'include',
-	TOKEN: undefined,
-	USERNAME: undefined,
-	PASSWORD: undefined,
-	HEADERS: undefined,
-	ENCODE_PATH: undefined,
-	DEFAULT_TIMEOUT_MILLISEC: undefined,
+export type Client = {
+	baseUrl: string;
+	accessToken?: string | Resolver<string> | undefined;
+	headers?: Headers | Resolver<Headers> | undefined;
+	timeoutMsec?: number | undefined;
 };

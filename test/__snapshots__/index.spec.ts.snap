@@ -1,34 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`v2 should generate: test/generated/v2/core/ApiError.ts 1`] = `
-"/* generated using openapi-typescript-codegen -- do not edit */
-/* istanbul ignore file */
-/* tslint:disable */
-/* eslint-disable */
-import type { ApiRequestOptions } from './ApiRequestOptions';
-import type { ApiResult } from './ApiResult';
-
-export class ApiError extends Error {
-    public readonly url: string;
-    public readonly status: number;
-    public readonly statusText: string;
-    public readonly body: any;
-    public readonly request: ApiRequestOptions;
-
-    constructor(request: ApiRequestOptions, response: ApiResult, message: string) {
-        super(message);
-
-        this.name = 'ApiError';
-        this.url = response.url;
-        this.status = response.status;
-        this.statusText = response.statusText;
-        this.body = response.body;
-        this.request = request;
-    }
-}
-"
-`;
-
 exports[`v2 should generate: test/generated/v2/core/ApiRequestOptions.ts 1`] = `
 "/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
@@ -44,6 +15,7 @@ export type ApiRequestOptions = {
     readonly formData?: Record<string, any>;
     readonly body?: any;
     readonly mediaType?: string;
+    readonly responseType?: 'blob';
     readonly responseHeader?: string;
     readonly errors?: Record<number, string>;
 };
@@ -55,12 +27,14 @@ exports[`v2 should generate: test/generated/v2/core/ApiResult.ts 1`] = `
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ApiResult = {
+export type ApiResult<T> = {
     readonly url: string;
     readonly ok: boolean;
     readonly status: number;
     readonly statusText: string;
-    readonly body: any;
+    readonly headers: Headers;
+    readonly body: T;
+    readonly error: any | undefined;
 };
 "
 `;
@@ -210,28 +184,13 @@ import type { ApiRequestOptions } from './ApiRequestOptions';
 type Resolver<T> = (options: ApiRequestOptions) => Promise<T>;
 type Headers = Record<string, string>;
 
-export type OpenAPIConfig = {
-    BASE: string;
-    VERSION: string;
-    WITH_CREDENTIALS: boolean;
-    CREDENTIALS: 'include' | 'omit' | 'same-origin';
-    TOKEN?: string | Resolver<string> | undefined;
-    USERNAME?: string | Resolver<string> | undefined;
-    PASSWORD?: string | Resolver<string> | undefined;
-    HEADERS?: Headers | Resolver<Headers> | undefined;
-    ENCODE_PATH?: ((path: string) => string) | undefined;
-};
+export const DEFAULT_BASE_URL = 'http://localhost:3000/base';
 
-export const OpenAPI: OpenAPIConfig = {
-    BASE: 'http://localhost:3000/base',
-    VERSION: '1.0',
-    WITH_CREDENTIALS: false,
-    CREDENTIALS: 'include',
-    TOKEN: undefined,
-    USERNAME: undefined,
-    PASSWORD: undefined,
-    HEADERS: undefined,
-    ENCODE_PATH: undefined,
+export type Client = {
+    baseUrl: string;
+    accessToken?: string | Resolver<string> | undefined;
+    headers?: Headers | Resolver<Headers> | undefined;
+    timeoutMsec?: number | undefined;
 };
 "
 `;
@@ -241,12 +200,11 @@ exports[`v2 should generate: test/generated/v2/core/request.ts 1`] = `
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import { ApiError } from './ApiError';
 import type { ApiRequestOptions } from './ApiRequestOptions';
 import type { ApiResult } from './ApiResult';
 import { CancelablePromise } from './CancelablePromise';
 import type { OnCancel } from './CancelablePromise';
-import type { OpenAPIConfig } from './OpenAPI';
+import type { Client } from './OpenAPI';
 
 export const isDefined = <T>(value: T | null | undefined): value is Exclude<T, null | undefined> => {
     return value !== undefined && value !== null;
@@ -320,11 +278,11 @@ export const getQueryString = (params: Record<string, any>): string => {
     return '';
 };
 
-const getUrl = (config: OpenAPIConfig, options: ApiRequestOptions): string => {
-    const encoder = config.ENCODE_PATH || encodeURI;
+const getUrl = (client: Client, options: ApiRequestOptions): string => {
+    const encoder = encodeURI;
 
     const path = options.url
-        .replace('{api-version}', config.VERSION)
+        // .replace('{api-version}', client.VERSION)
         .replace(/{(.*?)}/g, (substring: string, group: string) => {
             if (options.path?.hasOwnProperty(group)) {
                 return encoder(String(options.path[group]));
@@ -332,7 +290,7 @@ const getUrl = (config: OpenAPIConfig, options: ApiRequestOptions): string => {
             return substring;
         });
 
-    const url = \`\${config.BASE}\${path}\`;
+    const url = \`\${client.baseUrl}\${path}\`;
     if (options.query) {
         return \`\${url}\${getQueryString(options.query)}\`;
     }
@@ -375,12 +333,10 @@ export const resolve = async <T>(options: ApiRequestOptions, resolver?: T | Reso
     return resolver;
 };
 
-export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptions): Promise<Headers> => {
-    const [token, username, password, additionalHeaders] = await Promise.all([
-        resolve(options, config.TOKEN),
-        resolve(options, config.USERNAME),
-        resolve(options, config.PASSWORD),
-        resolve(options, config.HEADERS),
+export const getHeaders = async (client: Client, options: ApiRequestOptions): Promise<Headers> => {
+    const [token, additionalHeaders] = await Promise.all([
+        resolve(options, client.accessToken),
+        resolve(options, client.headers),
     ]);
 
     const headers = Object.entries({
@@ -396,11 +352,6 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
 
     if (isStringWithValue(token)) {
         headers['Authorization'] = \`Bearer \${token}\`;
-    }
-
-    if (isStringWithValue(username) && isStringWithValue(password)) {
-        const credentials = base64(\`\${username}:\${password}\`);
-        headers['Authorization'] = \`Basic \${credentials}\`;
     }
 
     if (options.body !== undefined) {
@@ -432,7 +383,7 @@ export const getRequestBody = (options: ApiRequestOptions): any => {
 };
 
 export const sendRequest = async (
-    config: OpenAPIConfig,
+    client: Client,
     options: ApiRequestOptions,
     url: string,
     body: any,
@@ -449,10 +400,6 @@ export const sendRequest = async (
         signal: controller.signal,
     };
 
-    if (config.WITH_CREDENTIALS) {
-        request.credentials = config.CREDENTIALS;
-    }
-
     onCancel(() => controller.abort());
 
     return await fetch(url, request);
@@ -468,7 +415,7 @@ export const getResponseHeader = (response: Response, responseHeader?: string): 
     return undefined;
 };
 
-export const getResponseBody = async (response: Response): Promise<any> => {
+export const getResponseBody = async (response: Response, options: ApiRequestOptions): Promise<any> => {
     if (response.status !== 204) {
         try {
             const contentType = response.headers.get('Content-Type');
@@ -477,6 +424,8 @@ export const getResponseBody = async (response: Response): Promise<any> => {
                 const isJSON = jsonTypes.some(type => contentType.toLowerCase().startsWith(type));
                 if (isJSON) {
                     return await response.json();
+                } else if (options.responseType === 'blob') {
+                    return await response.blob();
                 } else {
                     return await response.text();
                 }
@@ -488,7 +437,7 @@ export const getResponseBody = async (response: Response): Promise<any> => {
     return undefined;
 };
 
-export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): void => {
+export const catchErrorCodes = (options: ApiRequestOptions, ok: boolean, status: number, statusText: string, body: any): string | undefined => {
     const errors: Record<number, string> = {
         400: 'Bad Request',
         401: 'Unauthorized',
@@ -500,62 +449,70 @@ export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): 
         ...options.errors,
     }
 
-    const error = errors[result.status];
+    const error = errors[status];
     if (error) {
-        throw new ApiError(options, result, error);
+        return error;
     }
 
-    if (!result.ok) {
-        const errorStatus = result.status ?? 'unknown';
-        const errorStatusText = result.statusText ?? 'unknown';
+    if (!ok) {
+        const errorStatus = status ?? 'unknown';
+        const errorStatusText = statusText ?? 'unknown';
         const errorBody = (() => {
             try {
-                return JSON.stringify(result.body, null, 2);
+                return JSON.stringify(body, null, 2);
             } catch (e) {
                 return undefined;
             }
         })();
 
-        throw new ApiError(options, result,
-            \`Generic Error: status: \${errorStatus}; status text: \${errorStatusText}; body: \${errorBody}\`
-        );
+        return \`Generic Error: status: \${errorStatus}; status text: \${errorStatusText}; body: \${errorBody}\`;
     }
+
+    return undefined;
 };
 
 /**
  * Request method
- * @param config The OpenAPI configuration object
+ * @param client The OpenAPI client object
  * @param options The request options from the service
  * @returns CancelablePromise<T>
  * @throws ApiError
  */
-export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): CancelablePromise<T> => {
+export const request = <T>(client: Client, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
     return new CancelablePromise(async (resolve, reject, onCancel) => {
+        const url = getUrl(client, options);
+        const formData = getFormData(options);
+        const body = getRequestBody(options);
+        const headers = await getHeaders(client, options);
         try {
-            const url = getUrl(config, options);
-            const formData = getFormData(options);
-            const body = getRequestBody(options);
-            const headers = await getHeaders(config, options);
-
             if (!onCancel.isCancelled) {
-                const response = await sendRequest(config, options, url, body, formData, headers, onCancel);
-                const responseBody = await getResponseBody(response);
+                const response = await sendRequest(client, options, url, body, formData, headers, onCancel);
+                const responseBody = await getResponseBody(response, options);
                 const responseHeader = getResponseHeader(response, options.responseHeader);
+                const resultBody = responseHeader ?? responseBody;
 
-                const result: ApiResult = {
+                const result: ApiResult<T> = {
                     url,
                     ok: response.ok,
                     status: response.status,
                     statusText: response.statusText,
-                    body: responseHeader ?? responseBody,
+                    headers,
+                    body: resultBody,
+                    error: catchErrorCodes(options, response.ok, response.status, response.statusText, resultBody),
                 };
 
-                catchErrorCodes(options, result);
-
-                resolve(result.body);
+                resolve(result);
             }
         } catch (error) {
-            reject(error);
+            resolve({
+                url,
+                ok: false,
+                status: 0,
+                statusText: 'Unknown',
+                body: JSON.stringify(error) as T,
+                headers,
+                error,
+            });
         }
     });
 };
@@ -569,8 +526,7 @@ exports[`v2 should generate: test/generated/v2/index.ts 1`] = `
 /* eslint-disable */
 export { ApiError } from './core/ApiError';
 export { CancelablePromise, CancelError } from './core/CancelablePromise';
-export { OpenAPI } from './core/OpenAPI';
-export type { OpenAPIConfig } from './core/OpenAPI';
+export { Client } from './core/OpenAPI';
 
 export type { _default } from './models/_default';
 export type { ArrayWithArray } from './models/ArrayWithArray';
@@ -2336,8 +2292,9 @@ exports[`v2 should generate: test/generated/v2/services/CollectionFormatService.
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class CollectionFormatService {
     /**
      * @param parameterArrayCsv This is an array parameter that is sent as csv format (comma-separated values)
@@ -2347,25 +2304,25 @@ export class CollectionFormatService {
      * @param parameterArrayMulti This is an array parameter that is sent as multi format (multiple parameter instances)
      * @throws ApiError
      */
-    public static collectionFormat(
-        parameterArrayCsv: Array<string>,
-        parameterArraySsv: Array<string>,
-        parameterArrayTsv: Array<string>,
-        parameterArrayPipes: Array<string>,
-        parameterArrayMulti: Array<string>,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/collectionFormat',
-            query: {
-                'parameterArrayCSV': parameterArrayCsv,
-                'parameterArraySSV': parameterArraySsv,
-                'parameterArrayTSV': parameterArrayTsv,
-                'parameterArrayPipes': parameterArrayPipes,
-                'parameterArrayMulti': parameterArrayMulti,
-            },
-        });
-    }
+    public static collectionFormat(client: Client,
+    parameterArrayCsv: Array<string>,
+    parameterArraySsv: Array<string>,
+    parameterArrayTsv: Array<string>,
+    parameterArrayPipes: Array<string>,
+    parameterArrayMulti: Array<string>,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/collectionFormat',
+        query: {
+            'parameterArrayCSV': parameterArrayCsv,
+            'parameterArraySSV': parameterArraySsv,
+            'parameterArrayTSV': parameterArrayTsv,
+            'parameterArrayPipes': parameterArrayPipes,
+            'parameterArrayMulti': parameterArrayMulti,
+        },
+    });
+}
 }
 "
 `;
@@ -2377,8 +2334,9 @@ exports[`v2 should generate: test/generated/v2/services/ComplexService.ts 1`] = 
 /* eslint-disable */
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ComplexService {
     /**
      * @param parameterObject Parameter containing object
@@ -2386,29 +2344,29 @@ export class ComplexService {
      * @returns ModelWithString Successful response
      * @throws ApiError
      */
-    public static complexTypes(
-        parameterObject: {
-            first?: {
-                second?: {
-                    third?: string;
-                };
+    public static complexTypes(client: Client,
+    parameterObject: {
+        first?: {
+            second?: {
+                third?: string;
             };
+        };
+    },
+    parameterReference: ModelWithString,
+): CancelablePromise<ApiResult<Array<ModelWithString>>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/complex',
+        query: {
+            'parameterObject': parameterObject,
+            'parameterReference': parameterReference,
         },
-        parameterReference: ModelWithString,
-    ): CancelablePromise<Array<ModelWithString>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/complex',
-            query: {
-                'parameterObject': parameterObject,
-                'parameterReference': parameterReference,
-            },
-            errors: {
-                400: \`400 server error\`,
-                500: \`500 server error\`,
-            },
-        });
-    }
+        errors: {
+            400: \`400 server error\`,
+            500: \`500 server error\`,
+        },
+    });
+}
 }
 "
 `;
@@ -2419,14 +2377,15 @@ exports[`v2 should generate: test/generated/v2/services/DefaultService.ts 1`] = 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DefaultService {
     /**
      * @throws ApiError
      */
-    public static serviceWithEmptyTag(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static serviceWithEmptyTag(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/no-tag',
         });
@@ -2442,8 +2401,9 @@ exports[`v2 should generate: test/generated/v2/services/DefaultsService.ts 1`] =
 /* eslint-disable */
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DefaultsService {
     /**
      * @param parameterString This is a simple string with default value
@@ -2453,92 +2413,92 @@ export class DefaultsService {
      * @param parameterModel This is a simple model with default value
      * @throws ApiError
      */
-    public static callWithDefaultParameters(
-        parameterString: string = 'Hello World!',
-        parameterNumber: number = 123,
-        parameterBoolean: boolean = true,
-        parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
-        parameterModel: ModelWithString = {
-            "prop": "Hello World!"
+    public static callWithDefaultParameters(client: Client,
+    parameterString: string = 'Hello World!',
+    parameterNumber: number = 123,
+    parameterBoolean: boolean = true,
+    parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
+    parameterModel: ModelWithString = {
+        "prop": "Hello World!"
+    },
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/defaults',
+        query: {
+            'parameterString': parameterString,
+            'parameterNumber': parameterNumber,
+            'parameterBoolean': parameterBoolean,
+            'parameterEnum': parameterEnum,
+            'parameterModel': parameterModel,
         },
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/defaults',
-            query: {
-                'parameterString': parameterString,
-                'parameterNumber': parameterNumber,
-                'parameterBoolean': parameterBoolean,
-                'parameterEnum': parameterEnum,
-                'parameterModel': parameterModel,
-            },
-        });
-    }
-    /**
-     * @param parameterString This is a simple string that is optional with default value
-     * @param parameterNumber This is a simple number that is optional with default value
-     * @param parameterBoolean This is a simple boolean that is optional with default value
-     * @param parameterEnum This is a simple enum that is optional with default value
-     * @param parameterModel This is a simple model that is optional with default value
-     * @throws ApiError
-     */
-    public static callWithDefaultOptionalParameters(
-        parameterString: string = 'Hello World!',
-        parameterNumber: number = 123,
-        parameterBoolean: boolean = true,
-        parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
-        parameterModel: ModelWithString = {
-            "prop": "Hello World!"
+    });
+}
+/**
+ * @param parameterString This is a simple string that is optional with default value
+ * @param parameterNumber This is a simple number that is optional with default value
+ * @param parameterBoolean This is a simple boolean that is optional with default value
+ * @param parameterEnum This is a simple enum that is optional with default value
+ * @param parameterModel This is a simple model that is optional with default value
+ * @throws ApiError
+ */
+public static callWithDefaultOptionalParameters(client: Client,
+parameterString: string = 'Hello World!',
+parameterNumber: number = 123,
+parameterBoolean: boolean = true,
+parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
+parameterModel: ModelWithString = {
+    "prop": "Hello World!"
+},
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/defaults',
+        query: {
+            'parameterString': parameterString,
+            'parameterNumber': parameterNumber,
+            'parameterBoolean': parameterBoolean,
+            'parameterEnum': parameterEnum,
+            'parameterModel': parameterModel,
         },
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/defaults',
-            query: {
-                'parameterString': parameterString,
-                'parameterNumber': parameterNumber,
-                'parameterBoolean': parameterBoolean,
-                'parameterEnum': parameterEnum,
-                'parameterModel': parameterModel,
-            },
-        });
-    }
-    /**
-     * @param parameterStringWithNoDefault This is a string with no default
-     * @param parameterOptionalStringWithDefault This is a optional string with default
-     * @param parameterOptionalStringWithEmptyDefault This is a optional string with empty default
-     * @param parameterOptionalStringWithNoDefault This is a optional string with no default
-     * @param parameterStringWithDefault This is a string with default
-     * @param parameterStringWithEmptyDefault This is a string with empty default
-     * @param parameterStringNullableWithNoDefault This is a string that can be null with no default
-     * @param parameterStringNullableWithDefault This is a string that can be null with default
-     * @throws ApiError
-     */
-    public static callToTestOrderOfParams(
-        parameterStringWithNoDefault: string,
-        parameterOptionalStringWithDefault: string = 'Hello World!',
-        parameterOptionalStringWithEmptyDefault: string = '',
-        parameterOptionalStringWithNoDefault?: string,
-        parameterStringWithDefault: string = 'Hello World!',
-        parameterStringWithEmptyDefault: string = '',
-        parameterStringNullableWithNoDefault?: string | null,
-        parameterStringNullableWithDefault: string | null = null,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v{api-version}/defaults',
-            query: {
-                'parameterOptionalStringWithDefault': parameterOptionalStringWithDefault,
-                'parameterOptionalStringWithEmptyDefault': parameterOptionalStringWithEmptyDefault,
-                'parameterOptionalStringWithNoDefault': parameterOptionalStringWithNoDefault,
-                'parameterStringWithDefault': parameterStringWithDefault,
-                'parameterStringWithEmptyDefault': parameterStringWithEmptyDefault,
-                'parameterStringWithNoDefault': parameterStringWithNoDefault,
-                'parameterStringNullableWithNoDefault': parameterStringNullableWithNoDefault,
-                'parameterStringNullableWithDefault': parameterStringNullableWithDefault,
-            },
-        });
-    }
+    });
+}
+/**
+ * @param parameterStringWithNoDefault This is a string with no default
+ * @param parameterOptionalStringWithDefault This is a optional string with default
+ * @param parameterOptionalStringWithEmptyDefault This is a optional string with empty default
+ * @param parameterOptionalStringWithNoDefault This is a optional string with no default
+ * @param parameterStringWithDefault This is a string with default
+ * @param parameterStringWithEmptyDefault This is a string with empty default
+ * @param parameterStringNullableWithNoDefault This is a string that can be null with no default
+ * @param parameterStringNullableWithDefault This is a string that can be null with default
+ * @throws ApiError
+ */
+public static callToTestOrderOfParams(client: Client,
+parameterStringWithNoDefault: string,
+parameterOptionalStringWithDefault: string = 'Hello World!',
+parameterOptionalStringWithEmptyDefault: string = '',
+parameterOptionalStringWithNoDefault?: string,
+parameterStringWithDefault: string = 'Hello World!',
+parameterStringWithEmptyDefault: string = '',
+parameterStringNullableWithNoDefault?: string | null,
+parameterStringNullableWithDefault: string | null = null,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'PUT',
+        url: '/api/v{api-version}/defaults',
+        query: {
+            'parameterOptionalStringWithDefault': parameterOptionalStringWithDefault,
+            'parameterOptionalStringWithEmptyDefault': parameterOptionalStringWithEmptyDefault,
+            'parameterOptionalStringWithNoDefault': parameterOptionalStringWithNoDefault,
+            'parameterStringWithDefault': parameterStringWithDefault,
+            'parameterStringWithEmptyDefault': parameterStringWithEmptyDefault,
+            'parameterStringWithNoDefault': parameterStringWithNoDefault,
+            'parameterStringNullableWithNoDefault': parameterStringNullableWithNoDefault,
+            'parameterStringNullableWithDefault': parameterStringNullableWithDefault,
+        },
+    });
+}
 }
 "
 `;
@@ -2549,8 +2509,9 @@ exports[`v2 should generate: test/generated/v2/services/DescriptionsService.ts 1
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DescriptionsService {
     /**
      * @param parameterWithBreaks Testing multiline comments in string: First line
@@ -2564,27 +2525,27 @@ export class DescriptionsService {
      * @param parameterWithReservedCharacters Testing reserved characters in string: * inline * and ** inline ** should work
      * @throws ApiError
      */
-    public static callWithDescriptions(
-        parameterWithBreaks?: string,
-        parameterWithBackticks?: string,
-        parameterWithSlashes?: string,
-        parameterWithExpressionPlaceholders?: string,
-        parameterWithQuotes?: string,
-        parameterWithReservedCharacters?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/descriptions/',
-            query: {
-                'parameterWithBreaks': parameterWithBreaks,
-                'parameterWithBackticks': parameterWithBackticks,
-                'parameterWithSlashes': parameterWithSlashes,
-                'parameterWithExpressionPlaceholders': parameterWithExpressionPlaceholders,
-                'parameterWithQuotes': parameterWithQuotes,
-                'parameterWithReservedCharacters': parameterWithReservedCharacters,
-            },
-        });
-    }
+    public static callWithDescriptions(client: Client,
+    parameterWithBreaks?: string,
+    parameterWithBackticks?: string,
+    parameterWithSlashes?: string,
+    parameterWithExpressionPlaceholders?: string,
+    parameterWithQuotes?: string,
+    parameterWithReservedCharacters?: string,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/descriptions/',
+        query: {
+            'parameterWithBreaks': parameterWithBreaks,
+            'parameterWithBackticks': parameterWithBackticks,
+            'parameterWithSlashes': parameterWithSlashes,
+            'parameterWithExpressionPlaceholders': parameterWithExpressionPlaceholders,
+            'parameterWithQuotes': parameterWithQuotes,
+            'parameterWithReservedCharacters': parameterWithReservedCharacters,
+        },
+    });
+}
 }
 "
 `;
@@ -2595,14 +2556,15 @@ exports[`v2 should generate: test/generated/v2/services/DuplicateService.ts 1`] 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/duplicate',
         });
@@ -2610,8 +2572,8 @@ export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName1(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName1(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/duplicate',
         });
@@ -2619,8 +2581,8 @@ export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName2(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName2(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'PUT',
             url: '/api/v{api-version}/duplicate',
         });
@@ -2628,8 +2590,8 @@ export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName3(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName3(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'DELETE',
             url: '/api/v{api-version}/duplicate',
         });
@@ -2644,31 +2606,32 @@ exports[`v2 should generate: test/generated/v2/services/ErrorService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ErrorService {
     /**
      * @param status Status code to return
      * @returns any Custom message: Successful response
      * @throws ApiError
      */
-    public static testErrorCode(
-        status: string,
-    ): CancelablePromise<any> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/error',
-            query: {
-                'status': status,
-            },
-            errors: {
-                500: \`Custom message: Internal Server Error\`,
-                501: \`Custom message: Not Implemented\`,
-                502: \`Custom message: Bad Gateway\`,
-                503: \`Custom message: Service Unavailable\`,
-            },
-        });
-    }
+    public static testErrorCode(client: Client,
+    status: string,
+): CancelablePromise<ApiResult<any>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/error',
+        query: {
+            'status': status,
+        },
+        errors: {
+            500: \`Custom message: Internal Server Error\`,
+            501: \`Custom message: Not Implemented\`,
+            502: \`Custom message: Bad Gateway\`,
+            503: \`Custom message: Service Unavailable\`,
+        },
+    });
+}
 }
 "
 `;
@@ -2679,15 +2642,16 @@ exports[`v2 should generate: test/generated/v2/services/HeaderService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class HeaderService {
     /**
      * @returns string Successful response
      * @throws ApiError
      */
-    public static callWithResultFromHeader(): CancelablePromise<string> {
-        return __request(OpenAPI, {
+    public static callWithResultFromHeader(client: Client): CancelablePromise<ApiResult<string>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/header',
             responseHeader: 'operation-location',
@@ -2707,15 +2671,16 @@ exports[`v2 should generate: test/generated/v2/services/MultipleTags1Service.ts 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipleTags1Service {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static dummyA(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyA(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/a',
         });
@@ -2724,8 +2689,8 @@ export class MultipleTags1Service {
      * @returns void
      * @throws ApiError
      */
-    public static dummyB(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyB(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/b',
         });
@@ -2740,15 +2705,16 @@ exports[`v2 should generate: test/generated/v2/services/MultipleTags2Service.ts 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipleTags2Service {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static dummyA(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyA(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/a',
         });
@@ -2757,8 +2723,8 @@ export class MultipleTags2Service {
      * @returns void
      * @throws ApiError
      */
-    public static dummyB(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyB(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/b',
         });
@@ -2773,15 +2739,16 @@ exports[`v2 should generate: test/generated/v2/services/MultipleTags3Service.ts 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipleTags3Service {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static dummyB(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyB(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/b',
         });
@@ -2796,15 +2763,16 @@ exports[`v2 should generate: test/generated/v2/services/NoContentService.ts 1`] 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class NoContentService {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static callWithNoContentResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static callWithNoContentResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/no-content',
         });
@@ -2819,8 +2787,9 @@ exports[`v2 should generate: test/generated/v2/services/ParametersService.ts 1`]
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ParametersService {
     /**
      * @param parameterHeader This is the parameter that goes into the header
@@ -2830,73 +2799,73 @@ export class ParametersService {
      * @param parameterPath This is the parameter that goes into the path
      * @throws ApiError
      */
-    public static callWithParameters(
-        parameterHeader: string,
-        parameterQuery: string,
-        parameterForm: string,
-        parameterBody: string,
-        parameterPath: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/parameters/{parameterPath}',
-            path: {
-                'parameterPath': parameterPath,
-            },
-            headers: {
-                'parameterHeader': parameterHeader,
-            },
-            query: {
-                'parameterQuery': parameterQuery,
-            },
-            formData: {
-                'parameterForm': parameterForm,
-            },
-            body: parameterBody,
-        });
-    }
-    /**
-     * @param parameterHeader This is the parameter that goes into the request header
-     * @param parameterQuery This is the parameter that goes into the request query params
-     * @param parameterForm This is the parameter that goes into the request form data
-     * @param parameterBody This is the parameter that is sent as request body
-     * @param parameterPath1 This is the parameter that goes into the path
-     * @param parameterPath2 This is the parameter that goes into the path
-     * @param parameterPath3 This is the parameter that goes into the path
-     * @param _default This is the parameter with a reserved keyword
-     * @throws ApiError
-     */
-    public static callWithWeirdParameterNames(
-        parameterHeader: string,
-        parameterQuery: string,
-        parameterForm: string,
-        parameterBody: string,
-        parameterPath1?: string,
-        parameterPath2?: string,
-        parameterPath3?: string,
-        _default?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/parameters/{parameter.path.1}/{parameter-path-2}/{PARAMETER-PATH-3}',
-            path: {
-                'parameter.path.1': parameterPath1,
-                'parameter-path-2': parameterPath2,
-                'PARAMETER-PATH-3': parameterPath3,
-            },
-            headers: {
-                'parameter.header': parameterHeader,
-            },
-            query: {
-                'default': _default,
-                'parameter-query': parameterQuery,
-            },
-            formData: {
-                'parameter_form': parameterForm,
-            },
-            body: parameterBody,
-        });
-    }
+    public static callWithParameters(client: Client,
+    parameterHeader: string,
+    parameterQuery: string,
+    parameterForm: string,
+    parameterBody: string,
+    parameterPath: string,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/parameters/{parameterPath}',
+        path: {
+            'parameterPath': parameterPath,
+        },
+        headers: {
+            'parameterHeader': parameterHeader,
+        },
+        query: {
+            'parameterQuery': parameterQuery,
+        },
+        formData: {
+            'parameterForm': parameterForm,
+        },
+        body: parameterBody,
+    });
+}
+/**
+ * @param parameterHeader This is the parameter that goes into the request header
+ * @param parameterQuery This is the parameter that goes into the request query params
+ * @param parameterForm This is the parameter that goes into the request form data
+ * @param parameterBody This is the parameter that is sent as request body
+ * @param parameterPath1 This is the parameter that goes into the path
+ * @param parameterPath2 This is the parameter that goes into the path
+ * @param parameterPath3 This is the parameter that goes into the path
+ * @param _default This is the parameter with a reserved keyword
+ * @throws ApiError
+ */
+public static callWithWeirdParameterNames(client: Client,
+parameterHeader: string,
+parameterQuery: string,
+parameterForm: string,
+parameterBody: string,
+parameterPath1?: string,
+parameterPath2?: string,
+parameterPath3?: string,
+_default?: string,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/parameters/{parameter.path.1}/{parameter-path-2}/{PARAMETER-PATH-3}',
+        path: {
+            'parameter.path.1': parameterPath1,
+            'parameter-path-2': parameterPath2,
+            'PARAMETER-PATH-3': parameterPath3,
+        },
+        headers: {
+            'parameter.header': parameterHeader,
+        },
+        query: {
+            'default': _default,
+            'parameter-query': parameterQuery,
+        },
+        formData: {
+            'parameter_form': parameterForm,
+        },
+        body: parameterBody,
+    });
+}
 }
 "
 `;
@@ -2910,15 +2879,16 @@ import type { ModelThatExtends } from '../models/ModelThatExtends';
 import type { ModelThatExtendsExtends } from '../models/ModelThatExtendsExtends';
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ResponseService {
     /**
      * @returns ModelWithString Message for default response
      * @throws ApiError
      */
-    public static callWithResponse(): CancelablePromise<ModelWithString> {
-        return __request(OpenAPI, {
+    public static callWithResponse(client: Client): CancelablePromise<ApiResult<ModelWithString>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/response',
         });
@@ -2927,8 +2897,8 @@ export class ResponseService {
      * @returns ModelWithString Message for default response
      * @throws ApiError
      */
-    public static callWithDuplicateResponses(): CancelablePromise<ModelWithString> {
-        return __request(OpenAPI, {
+    public static callWithDuplicateResponses(client: Client): CancelablePromise<ApiResult<ModelWithString>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/response',
             errors: {
@@ -2945,12 +2915,12 @@ export class ResponseService {
      * @returns ModelThatExtendsExtends Message for 202 response
      * @throws ApiError
      */
-    public static callWithResponses(): CancelablePromise<{
+    public static callWithResponses(client: Client): CancelablePromise<ApiResult<{
         readonly '@namespace.string'?: string;
         readonly '@namespace.integer'?: number;
         readonly value?: Array<ModelWithString>;
-    } | ModelWithString | ModelThatExtends | ModelThatExtendsExtends> {
-        return __request(OpenAPI, {
+    } | ModelWithString | ModelThatExtends | ModelThatExtendsExtends>> {
+        return __request(client, {
             method: 'PUT',
             url: '/api/v{api-version}/response',
             errors: {
@@ -2970,14 +2940,15 @@ exports[`v2 should generate: test/generated/v2/services/SimpleService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static getCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static getCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/simple',
         });
@@ -2985,8 +2956,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static putCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static putCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'PUT',
             url: '/api/v{api-version}/simple',
         });
@@ -2994,8 +2965,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static postCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static postCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/simple',
         });
@@ -3003,8 +2974,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static deleteCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static deleteCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'DELETE',
             url: '/api/v{api-version}/simple',
         });
@@ -3012,8 +2983,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static optionsCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static optionsCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'OPTIONS',
             url: '/api/v{api-version}/simple',
         });
@@ -3021,8 +2992,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static headCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static headCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'HEAD',
             url: '/api/v{api-version}/simple',
         });
@@ -3030,8 +3001,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static patchCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static patchCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'PATCH',
             url: '/api/v{api-version}/simple',
         });
@@ -3046,8 +3017,9 @@ exports[`v2 should generate: test/generated/v2/services/TypesService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class TypesService {
     /**
      * @param parameterArray This is an array parameter
@@ -3064,62 +3036,33 @@ export class TypesService {
      * @returns any Response is a simple object
      * @throws ApiError
      */
-    public static types(
-        parameterArray: Array<string>,
-        parameterDictionary: Record<string, string>,
-        parameterEnum: 'Success' | 'Warning' | 'Error',
-        parameterNumber: number = 123,
-        parameterString: string = 'default',
-        parameterBoolean: boolean = true,
-        parameterObject: any = null,
-        id?: number,
-    ): CancelablePromise<number | string | boolean | any> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/types',
-            path: {
-                'id': id,
-            },
-            query: {
-                'parameterNumber': parameterNumber,
-                'parameterString': parameterString,
-                'parameterBoolean': parameterBoolean,
-                'parameterObject': parameterObject,
-                'parameterArray': parameterArray,
-                'parameterDictionary': parameterDictionary,
-                'parameterEnum': parameterEnum,
-            },
-        });
-    }
+    public static types(client: Client,
+    parameterArray: Array<string>,
+    parameterDictionary: Record<string, string>,
+    parameterEnum: 'Success' | 'Warning' | 'Error',
+    parameterNumber: number = 123,
+    parameterString: string = 'default',
+    parameterBoolean: boolean = true,
+    parameterObject: any = null,
+    id?: number,
+): CancelablePromise<ApiResult<number | string | boolean | any>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/types',
+        path: {
+            'id': id,
+        },
+        query: {
+            'parameterNumber': parameterNumber,
+            'parameterString': parameterString,
+            'parameterBoolean': parameterBoolean,
+            'parameterObject': parameterObject,
+            'parameterArray': parameterArray,
+            'parameterDictionary': parameterDictionary,
+            'parameterEnum': parameterEnum,
+        },
+    });
 }
-"
-`;
-
-exports[`v3 should generate: test/generated/v3/core/ApiError.ts 1`] = `
-"/* generated using openapi-typescript-codegen -- do not edit */
-/* istanbul ignore file */
-/* tslint:disable */
-/* eslint-disable */
-import type { ApiRequestOptions } from './ApiRequestOptions';
-import type { ApiResult } from './ApiResult';
-
-export class ApiError extends Error {
-    public readonly url: string;
-    public readonly status: number;
-    public readonly statusText: string;
-    public readonly body: any;
-    public readonly request: ApiRequestOptions;
-
-    constructor(request: ApiRequestOptions, response: ApiResult, message: string) {
-        super(message);
-
-        this.name = 'ApiError';
-        this.url = response.url;
-        this.status = response.status;
-        this.statusText = response.statusText;
-        this.body = response.body;
-        this.request = request;
-    }
 }
 "
 `;
@@ -3139,6 +3082,7 @@ export type ApiRequestOptions = {
     readonly formData?: Record<string, any>;
     readonly body?: any;
     readonly mediaType?: string;
+    readonly responseType?: 'blob';
     readonly responseHeader?: string;
     readonly errors?: Record<number, string>;
 };
@@ -3150,12 +3094,14 @@ exports[`v3 should generate: test/generated/v3/core/ApiResult.ts 1`] = `
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ApiResult = {
+export type ApiResult<T> = {
     readonly url: string;
     readonly ok: boolean;
     readonly status: number;
     readonly statusText: string;
-    readonly body: any;
+    readonly headers: Headers;
+    readonly body: T;
+    readonly error: any | undefined;
 };
 "
 `;
@@ -3305,28 +3251,13 @@ import type { ApiRequestOptions } from './ApiRequestOptions';
 type Resolver<T> = (options: ApiRequestOptions) => Promise<T>;
 type Headers = Record<string, string>;
 
-export type OpenAPIConfig = {
-    BASE: string;
-    VERSION: string;
-    WITH_CREDENTIALS: boolean;
-    CREDENTIALS: 'include' | 'omit' | 'same-origin';
-    TOKEN?: string | Resolver<string> | undefined;
-    USERNAME?: string | Resolver<string> | undefined;
-    PASSWORD?: string | Resolver<string> | undefined;
-    HEADERS?: Headers | Resolver<Headers> | undefined;
-    ENCODE_PATH?: ((path: string) => string) | undefined;
-};
+export const DEFAULT_BASE_URL = 'http://localhost:3000/base';
 
-export const OpenAPI: OpenAPIConfig = {
-    BASE: 'http://localhost:3000/base',
-    VERSION: '1.0',
-    WITH_CREDENTIALS: false,
-    CREDENTIALS: 'include',
-    TOKEN: undefined,
-    USERNAME: undefined,
-    PASSWORD: undefined,
-    HEADERS: undefined,
-    ENCODE_PATH: undefined,
+export type Client = {
+    baseUrl: string;
+    accessToken?: string | Resolver<string> | undefined;
+    headers?: Headers | Resolver<Headers> | undefined;
+    timeoutMsec?: number | undefined;
 };
 "
 `;
@@ -3336,12 +3267,11 @@ exports[`v3 should generate: test/generated/v3/core/request.ts 1`] = `
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import { ApiError } from './ApiError';
 import type { ApiRequestOptions } from './ApiRequestOptions';
 import type { ApiResult } from './ApiResult';
 import { CancelablePromise } from './CancelablePromise';
 import type { OnCancel } from './CancelablePromise';
-import type { OpenAPIConfig } from './OpenAPI';
+import type { Client } from './OpenAPI';
 
 export const isDefined = <T>(value: T | null | undefined): value is Exclude<T, null | undefined> => {
     return value !== undefined && value !== null;
@@ -3415,11 +3345,11 @@ export const getQueryString = (params: Record<string, any>): string => {
     return '';
 };
 
-const getUrl = (config: OpenAPIConfig, options: ApiRequestOptions): string => {
-    const encoder = config.ENCODE_PATH || encodeURI;
+const getUrl = (client: Client, options: ApiRequestOptions): string => {
+    const encoder = encodeURI;
 
     const path = options.url
-        .replace('{api-version}', config.VERSION)
+        // .replace('{api-version}', client.VERSION)
         .replace(/{(.*?)}/g, (substring: string, group: string) => {
             if (options.path?.hasOwnProperty(group)) {
                 return encoder(String(options.path[group]));
@@ -3427,7 +3357,7 @@ const getUrl = (config: OpenAPIConfig, options: ApiRequestOptions): string => {
             return substring;
         });
 
-    const url = \`\${config.BASE}\${path}\`;
+    const url = \`\${client.baseUrl}\${path}\`;
     if (options.query) {
         return \`\${url}\${getQueryString(options.query)}\`;
     }
@@ -3470,12 +3400,10 @@ export const resolve = async <T>(options: ApiRequestOptions, resolver?: T | Reso
     return resolver;
 };
 
-export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptions): Promise<Headers> => {
-    const [token, username, password, additionalHeaders] = await Promise.all([
-        resolve(options, config.TOKEN),
-        resolve(options, config.USERNAME),
-        resolve(options, config.PASSWORD),
-        resolve(options, config.HEADERS),
+export const getHeaders = async (client: Client, options: ApiRequestOptions): Promise<Headers> => {
+    const [token, additionalHeaders] = await Promise.all([
+        resolve(options, client.accessToken),
+        resolve(options, client.headers),
     ]);
 
     const headers = Object.entries({
@@ -3491,11 +3419,6 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
 
     if (isStringWithValue(token)) {
         headers['Authorization'] = \`Bearer \${token}\`;
-    }
-
-    if (isStringWithValue(username) && isStringWithValue(password)) {
-        const credentials = base64(\`\${username}:\${password}\`);
-        headers['Authorization'] = \`Basic \${credentials}\`;
     }
 
     if (options.body !== undefined) {
@@ -3527,7 +3450,7 @@ export const getRequestBody = (options: ApiRequestOptions): any => {
 };
 
 export const sendRequest = async (
-    config: OpenAPIConfig,
+    client: Client,
     options: ApiRequestOptions,
     url: string,
     body: any,
@@ -3544,10 +3467,6 @@ export const sendRequest = async (
         signal: controller.signal,
     };
 
-    if (config.WITH_CREDENTIALS) {
-        request.credentials = config.CREDENTIALS;
-    }
-
     onCancel(() => controller.abort());
 
     return await fetch(url, request);
@@ -3563,7 +3482,7 @@ export const getResponseHeader = (response: Response, responseHeader?: string): 
     return undefined;
 };
 
-export const getResponseBody = async (response: Response): Promise<any> => {
+export const getResponseBody = async (response: Response, options: ApiRequestOptions): Promise<any> => {
     if (response.status !== 204) {
         try {
             const contentType = response.headers.get('Content-Type');
@@ -3572,6 +3491,8 @@ export const getResponseBody = async (response: Response): Promise<any> => {
                 const isJSON = jsonTypes.some(type => contentType.toLowerCase().startsWith(type));
                 if (isJSON) {
                     return await response.json();
+                } else if (options.responseType === 'blob') {
+                    return await response.blob();
                 } else {
                     return await response.text();
                 }
@@ -3583,7 +3504,7 @@ export const getResponseBody = async (response: Response): Promise<any> => {
     return undefined;
 };
 
-export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): void => {
+export const catchErrorCodes = (options: ApiRequestOptions, ok: boolean, status: number, statusText: string, body: any): string | undefined => {
     const errors: Record<number, string> = {
         400: 'Bad Request',
         401: 'Unauthorized',
@@ -3595,62 +3516,70 @@ export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): 
         ...options.errors,
     }
 
-    const error = errors[result.status];
+    const error = errors[status];
     if (error) {
-        throw new ApiError(options, result, error);
+        return error;
     }
 
-    if (!result.ok) {
-        const errorStatus = result.status ?? 'unknown';
-        const errorStatusText = result.statusText ?? 'unknown';
+    if (!ok) {
+        const errorStatus = status ?? 'unknown';
+        const errorStatusText = statusText ?? 'unknown';
         const errorBody = (() => {
             try {
-                return JSON.stringify(result.body, null, 2);
+                return JSON.stringify(body, null, 2);
             } catch (e) {
                 return undefined;
             }
         })();
 
-        throw new ApiError(options, result,
-            \`Generic Error: status: \${errorStatus}; status text: \${errorStatusText}; body: \${errorBody}\`
-        );
+        return \`Generic Error: status: \${errorStatus}; status text: \${errorStatusText}; body: \${errorBody}\`;
     }
+
+    return undefined;
 };
 
 /**
  * Request method
- * @param config The OpenAPI configuration object
+ * @param client The OpenAPI client object
  * @param options The request options from the service
  * @returns CancelablePromise<T>
  * @throws ApiError
  */
-export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): CancelablePromise<T> => {
+export const request = <T>(client: Client, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
     return new CancelablePromise(async (resolve, reject, onCancel) => {
+        const url = getUrl(client, options);
+        const formData = getFormData(options);
+        const body = getRequestBody(options);
+        const headers = await getHeaders(client, options);
         try {
-            const url = getUrl(config, options);
-            const formData = getFormData(options);
-            const body = getRequestBody(options);
-            const headers = await getHeaders(config, options);
-
             if (!onCancel.isCancelled) {
-                const response = await sendRequest(config, options, url, body, formData, headers, onCancel);
-                const responseBody = await getResponseBody(response);
+                const response = await sendRequest(client, options, url, body, formData, headers, onCancel);
+                const responseBody = await getResponseBody(response, options);
                 const responseHeader = getResponseHeader(response, options.responseHeader);
+                const resultBody = responseHeader ?? responseBody;
 
-                const result: ApiResult = {
+                const result: ApiResult<T> = {
                     url,
                     ok: response.ok,
                     status: response.status,
                     statusText: response.statusText,
-                    body: responseHeader ?? responseBody,
+                    headers,
+                    body: resultBody,
+                    error: catchErrorCodes(options, response.ok, response.status, response.statusText, resultBody),
                 };
 
-                catchErrorCodes(options, result);
-
-                resolve(result.body);
+                resolve(result);
             }
         } catch (error) {
-            reject(error);
+            resolve({
+                url,
+                ok: false,
+                status: 0,
+                statusText: 'Unknown',
+                body: JSON.stringify(error) as T,
+                headers,
+                error,
+            });
         }
     });
 };
@@ -3664,8 +3593,7 @@ exports[`v3 should generate: test/generated/v3/index.ts 1`] = `
 /* eslint-disable */
 export { ApiError } from './core/ApiError';
 export { CancelablePromise, CancelError } from './core/CancelablePromise';
-export { OpenAPI } from './core/OpenAPI';
-export type { OpenAPIConfig } from './core/OpenAPI';
+export { Client } from './core/OpenAPI';
 
 export type { _default } from './models/_default';
 export type { ArrayWithArray } from './models/ArrayWithArray';
@@ -6367,8 +6295,9 @@ exports[`v3 should generate: test/generated/v3/services/CollectionFormatService.
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class CollectionFormatService {
     /**
      * @param parameterArrayCsv This is an array parameter that is sent as csv format (comma-separated values)
@@ -6378,25 +6307,25 @@ export class CollectionFormatService {
      * @param parameterArrayMulti This is an array parameter that is sent as multi format (multiple parameter instances)
      * @throws ApiError
      */
-    public static collectionFormat(
-        parameterArrayCsv: Array<string> | null,
-        parameterArraySsv: Array<string> | null,
-        parameterArrayTsv: Array<string> | null,
-        parameterArrayPipes: Array<string> | null,
-        parameterArrayMulti: Array<string> | null,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/collectionFormat',
-            query: {
-                'parameterArrayCSV': parameterArrayCsv,
-                'parameterArraySSV': parameterArraySsv,
-                'parameterArrayTSV': parameterArrayTsv,
-                'parameterArrayPipes': parameterArrayPipes,
-                'parameterArrayMulti': parameterArrayMulti,
-            },
-        });
-    }
+    public static collectionFormat(client: Client,
+    parameterArrayCsv: Array<string> | null,
+    parameterArraySsv: Array<string> | null,
+    parameterArrayTsv: Array<string> | null,
+    parameterArrayPipes: Array<string> | null,
+    parameterArrayMulti: Array<string> | null,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/collectionFormat',
+        query: {
+            'parameterArrayCSV': parameterArrayCsv,
+            'parameterArraySSV': parameterArraySsv,
+            'parameterArrayTSV': parameterArrayTsv,
+            'parameterArrayPipes': parameterArrayPipes,
+            'parameterArrayMulti': parameterArrayMulti,
+        },
+    });
+}
 }
 "
 `;
@@ -6411,8 +6340,9 @@ import type { ModelWithDictionary } from '../models/ModelWithDictionary';
 import type { ModelWithEnum } from '../models/ModelWithEnum';
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ComplexService {
     /**
      * @param parameterObject Parameter containing object
@@ -6420,61 +6350,61 @@ export class ComplexService {
      * @returns ModelWithString Successful response
      * @throws ApiError
      */
-    public static complexTypes(
-        parameterObject: {
-            first?: {
-                second?: {
-                    third?: string;
-                };
+    public static complexTypes(client: Client,
+    parameterObject: {
+        first?: {
+            second?: {
+                third?: string;
             };
+        };
+    },
+    parameterReference: ModelWithString,
+): CancelablePromise<ApiResult<Array<ModelWithString>>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/complex',
+        query: {
+            'parameterObject': parameterObject,
+            'parameterReference': parameterReference,
         },
-        parameterReference: ModelWithString,
-    ): CancelablePromise<Array<ModelWithString>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/complex',
-            query: {
-                'parameterObject': parameterObject,
-                'parameterReference': parameterReference,
-            },
-            errors: {
-                400: \`400 server error\`,
-                500: \`500 server error\`,
-            },
-        });
-    }
-    /**
-     * @param id
-     * @param requestBody
-     * @returns ModelWithString Success
-     * @throws ApiError
-     */
-    public static complexParams(
-        id: number,
-        requestBody?: {
-            readonly key: string | null;
-            name: string | null;
-            enabled?: boolean;
-            readonly type: 'Monkey' | 'Horse' | 'Bird';
-            listOfModels?: Array<ModelWithString> | null;
-            listOfStrings?: Array<string> | null;
-            parameters: (ModelWithString | ModelWithEnum | ModelWithArray | ModelWithDictionary);
-            readonly user?: {
-                readonly id?: number;
-                readonly name?: string | null;
-            };
+        errors: {
+            400: \`400 server error\`,
+            500: \`500 server error\`,
         },
-    ): CancelablePromise<ModelWithString> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v{api-version}/complex/{id}',
-            path: {
-                'id': id,
-            },
-            body: requestBody,
-            mediaType: 'application/json-patch+json',
-        });
-    }
+    });
+}
+/**
+ * @param id
+ * @param requestBody
+ * @returns ModelWithString Success
+ * @throws ApiError
+ */
+public static complexParams(client: Client,
+id: number,
+requestBody?: {
+    readonly key: string | null;
+    name: string | null;
+    enabled?: boolean;
+    readonly type: 'Monkey' | 'Horse' | 'Bird';
+    listOfModels?: Array<ModelWithString> | null;
+    listOfStrings?: Array<string> | null;
+    parameters: (ModelWithString | ModelWithEnum | ModelWithArray | ModelWithDictionary);
+    readonly user?: {
+        readonly id?: number;
+        readonly name?: string | null;
+    };
+},
+): CancelablePromise<ApiResult<ModelWithString>> {
+    return __request(client, {
+        method: 'PUT',
+        url: '/api/v{api-version}/complex/{id}',
+        path: {
+            'id': id,
+        },
+        body: requestBody,
+        mediaType: 'application/json-patch+json',
+    });
+}
 }
 "
 `;
@@ -6485,14 +6415,15 @@ exports[`v3 should generate: test/generated/v3/services/DefaultService.ts 1`] = 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DefaultService {
     /**
      * @throws ApiError
      */
-    public static serviceWithEmptyTag(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static serviceWithEmptyTag(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/no-tag',
         });
@@ -6508,8 +6439,9 @@ exports[`v3 should generate: test/generated/v3/services/DefaultsService.ts 1`] =
 /* eslint-disable */
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DefaultsService {
     /**
      * @param parameterString This is a simple string with default value
@@ -6519,92 +6451,92 @@ export class DefaultsService {
      * @param parameterModel This is a simple model with default value
      * @throws ApiError
      */
-    public static callWithDefaultParameters(
-        parameterString: string | null = 'Hello World!',
-        parameterNumber: number | null = 123,
-        parameterBoolean: boolean | null = true,
-        parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
-        parameterModel: ModelWithString | null = {
-            "prop": "Hello World!"
+    public static callWithDefaultParameters(client: Client,
+    parameterString: string | null = 'Hello World!',
+    parameterNumber: number | null = 123,
+    parameterBoolean: boolean | null = true,
+    parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
+    parameterModel: ModelWithString | null = {
+        "prop": "Hello World!"
+    },
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/defaults',
+        query: {
+            'parameterString': parameterString,
+            'parameterNumber': parameterNumber,
+            'parameterBoolean': parameterBoolean,
+            'parameterEnum': parameterEnum,
+            'parameterModel': parameterModel,
         },
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/defaults',
-            query: {
-                'parameterString': parameterString,
-                'parameterNumber': parameterNumber,
-                'parameterBoolean': parameterBoolean,
-                'parameterEnum': parameterEnum,
-                'parameterModel': parameterModel,
-            },
-        });
-    }
-    /**
-     * @param parameterString This is a simple string that is optional with default value
-     * @param parameterNumber This is a simple number that is optional with default value
-     * @param parameterBoolean This is a simple boolean that is optional with default value
-     * @param parameterEnum This is a simple enum that is optional with default value
-     * @param parameterModel This is a simple model that is optional with default value
-     * @throws ApiError
-     */
-    public static callWithDefaultOptionalParameters(
-        parameterString: string = 'Hello World!',
-        parameterNumber: number = 123,
-        parameterBoolean: boolean = true,
-        parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
-        parameterModel: ModelWithString = {
-            "prop": "Hello World!"
+    });
+}
+/**
+ * @param parameterString This is a simple string that is optional with default value
+ * @param parameterNumber This is a simple number that is optional with default value
+ * @param parameterBoolean This is a simple boolean that is optional with default value
+ * @param parameterEnum This is a simple enum that is optional with default value
+ * @param parameterModel This is a simple model that is optional with default value
+ * @throws ApiError
+ */
+public static callWithDefaultOptionalParameters(client: Client,
+parameterString: string = 'Hello World!',
+parameterNumber: number = 123,
+parameterBoolean: boolean = true,
+parameterEnum: 'Success' | 'Warning' | 'Error' = 'Success',
+parameterModel: ModelWithString = {
+    "prop": "Hello World!"
+},
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/defaults',
+        query: {
+            'parameterString': parameterString,
+            'parameterNumber': parameterNumber,
+            'parameterBoolean': parameterBoolean,
+            'parameterEnum': parameterEnum,
+            'parameterModel': parameterModel,
         },
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/defaults',
-            query: {
-                'parameterString': parameterString,
-                'parameterNumber': parameterNumber,
-                'parameterBoolean': parameterBoolean,
-                'parameterEnum': parameterEnum,
-                'parameterModel': parameterModel,
-            },
-        });
-    }
-    /**
-     * @param parameterStringWithNoDefault This is a string with no default
-     * @param parameterOptionalStringWithDefault This is a optional string with default
-     * @param parameterOptionalStringWithEmptyDefault This is a optional string with empty default
-     * @param parameterOptionalStringWithNoDefault This is a optional string with no default
-     * @param parameterStringWithDefault This is a string with default
-     * @param parameterStringWithEmptyDefault This is a string with empty default
-     * @param parameterStringNullableWithNoDefault This is a string that can be null with no default
-     * @param parameterStringNullableWithDefault This is a string that can be null with default
-     * @throws ApiError
-     */
-    public static callToTestOrderOfParams(
-        parameterStringWithNoDefault: string,
-        parameterOptionalStringWithDefault: string = 'Hello World!',
-        parameterOptionalStringWithEmptyDefault: string = '',
-        parameterOptionalStringWithNoDefault?: string,
-        parameterStringWithDefault: string = 'Hello World!',
-        parameterStringWithEmptyDefault: string = '',
-        parameterStringNullableWithNoDefault?: string | null,
-        parameterStringNullableWithDefault: string | null = null,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v{api-version}/defaults',
-            query: {
-                'parameterOptionalStringWithDefault': parameterOptionalStringWithDefault,
-                'parameterOptionalStringWithEmptyDefault': parameterOptionalStringWithEmptyDefault,
-                'parameterOptionalStringWithNoDefault': parameterOptionalStringWithNoDefault,
-                'parameterStringWithDefault': parameterStringWithDefault,
-                'parameterStringWithEmptyDefault': parameterStringWithEmptyDefault,
-                'parameterStringWithNoDefault': parameterStringWithNoDefault,
-                'parameterStringNullableWithNoDefault': parameterStringNullableWithNoDefault,
-                'parameterStringNullableWithDefault': parameterStringNullableWithDefault,
-            },
-        });
-    }
+    });
+}
+/**
+ * @param parameterStringWithNoDefault This is a string with no default
+ * @param parameterOptionalStringWithDefault This is a optional string with default
+ * @param parameterOptionalStringWithEmptyDefault This is a optional string with empty default
+ * @param parameterOptionalStringWithNoDefault This is a optional string with no default
+ * @param parameterStringWithDefault This is a string with default
+ * @param parameterStringWithEmptyDefault This is a string with empty default
+ * @param parameterStringNullableWithNoDefault This is a string that can be null with no default
+ * @param parameterStringNullableWithDefault This is a string that can be null with default
+ * @throws ApiError
+ */
+public static callToTestOrderOfParams(client: Client,
+parameterStringWithNoDefault: string,
+parameterOptionalStringWithDefault: string = 'Hello World!',
+parameterOptionalStringWithEmptyDefault: string = '',
+parameterOptionalStringWithNoDefault?: string,
+parameterStringWithDefault: string = 'Hello World!',
+parameterStringWithEmptyDefault: string = '',
+parameterStringNullableWithNoDefault?: string | null,
+parameterStringNullableWithDefault: string | null = null,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'PUT',
+        url: '/api/v{api-version}/defaults',
+        query: {
+            'parameterOptionalStringWithDefault': parameterOptionalStringWithDefault,
+            'parameterOptionalStringWithEmptyDefault': parameterOptionalStringWithEmptyDefault,
+            'parameterOptionalStringWithNoDefault': parameterOptionalStringWithNoDefault,
+            'parameterStringWithDefault': parameterStringWithDefault,
+            'parameterStringWithEmptyDefault': parameterStringWithEmptyDefault,
+            'parameterStringWithNoDefault': parameterStringWithNoDefault,
+            'parameterStringNullableWithNoDefault': parameterStringNullableWithNoDefault,
+            'parameterStringNullableWithDefault': parameterStringNullableWithDefault,
+        },
+    });
+}
 }
 "
 `;
@@ -6616,25 +6548,26 @@ exports[`v3 should generate: test/generated/v3/services/DeprecatedService.ts 1`]
 /* eslint-disable */
 import type { DeprecatedModel } from '../models/DeprecatedModel';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DeprecatedService {
     /**
      * @deprecated
      * @param parameter This parameter is deprecated
      * @throws ApiError
      */
-    public static deprecatedCall(
-        parameter: DeprecatedModel | null,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/parameters/deprecated',
-            headers: {
-                'parameter': parameter,
-            },
-        });
-    }
+    public static deprecatedCall(client: Client,
+    parameter: DeprecatedModel | null,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/parameters/deprecated',
+        headers: {
+            'parameter': parameter,
+        },
+    });
+}
 }
 "
 `;
@@ -6645,8 +6578,9 @@ exports[`v3 should generate: test/generated/v3/services/DescriptionsService.ts 1
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DescriptionsService {
     /**
      * @param parameterWithBreaks Testing multiline comments in string: First line
@@ -6660,27 +6594,27 @@ export class DescriptionsService {
      * @param parameterWithReservedCharacters Testing reserved characters in string: * inline * and ** inline ** should work
      * @throws ApiError
      */
-    public static callWithDescriptions(
-        parameterWithBreaks?: any,
-        parameterWithBackticks?: any,
-        parameterWithSlashes?: any,
-        parameterWithExpressionPlaceholders?: any,
-        parameterWithQuotes?: any,
-        parameterWithReservedCharacters?: any,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/descriptions/',
-            query: {
-                'parameterWithBreaks': parameterWithBreaks,
-                'parameterWithBackticks': parameterWithBackticks,
-                'parameterWithSlashes': parameterWithSlashes,
-                'parameterWithExpressionPlaceholders': parameterWithExpressionPlaceholders,
-                'parameterWithQuotes': parameterWithQuotes,
-                'parameterWithReservedCharacters': parameterWithReservedCharacters,
-            },
-        });
-    }
+    public static callWithDescriptions(client: Client,
+    parameterWithBreaks?: any,
+    parameterWithBackticks?: any,
+    parameterWithSlashes?: any,
+    parameterWithExpressionPlaceholders?: any,
+    parameterWithQuotes?: any,
+    parameterWithReservedCharacters?: any,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/descriptions/',
+        query: {
+            'parameterWithBreaks': parameterWithBreaks,
+            'parameterWithBackticks': parameterWithBackticks,
+            'parameterWithSlashes': parameterWithSlashes,
+            'parameterWithExpressionPlaceholders': parameterWithExpressionPlaceholders,
+            'parameterWithQuotes': parameterWithQuotes,
+            'parameterWithReservedCharacters': parameterWithReservedCharacters,
+        },
+    });
+}
 }
 "
 `;
@@ -6691,14 +6625,15 @@ exports[`v3 should generate: test/generated/v3/services/DuplicateService.ts 1`] 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/duplicate',
         });
@@ -6706,8 +6641,8 @@ export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName1(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName1(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/duplicate',
         });
@@ -6715,8 +6650,8 @@ export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName2(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName2(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'PUT',
             url: '/api/v{api-version}/duplicate',
         });
@@ -6724,8 +6659,8 @@ export class DuplicateService {
     /**
      * @throws ApiError
      */
-    public static duplicateName3(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static duplicateName3(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'DELETE',
             url: '/api/v{api-version}/duplicate',
         });
@@ -6740,31 +6675,32 @@ exports[`v3 should generate: test/generated/v3/services/ErrorService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ErrorService {
     /**
      * @param status Status code to return
      * @returns any Custom message: Successful response
      * @throws ApiError
      */
-    public static testErrorCode(
-        status: number,
-    ): CancelablePromise<any> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/error',
-            query: {
-                'status': status,
-            },
-            errors: {
-                500: \`Custom message: Internal Server Error\`,
-                501: \`Custom message: Not Implemented\`,
-                502: \`Custom message: Bad Gateway\`,
-                503: \`Custom message: Service Unavailable\`,
-            },
-        });
-    }
+    public static testErrorCode(client: Client,
+    status: number,
+): CancelablePromise<ApiResult<any>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/error',
+        query: {
+            'status': status,
+        },
+        errors: {
+            500: \`Custom message: Internal Server Error\`,
+            501: \`Custom message: Not Implemented\`,
+            502: \`Custom message: Bad Gateway\`,
+            503: \`Custom message: Service Unavailable\`,
+        },
+    });
+}
 }
 "
 `;
@@ -6776,28 +6712,29 @@ exports[`v3 should generate: test/generated/v3/services/FormDataService.ts 1`] =
 /* eslint-disable */
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class FormDataService {
     /**
      * @param parameter This is a reusable parameter
      * @param formData A reusable request body
      * @throws ApiError
      */
-    public static postApiFormData(
-        parameter?: string,
-        formData?: ModelWithString,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/formData/',
-            query: {
-                'parameter': parameter,
-            },
-            formData: formData,
-            mediaType: 'multipart/form-data',
-        });
-    }
+    public static postApiFormData(client: Client,
+    parameter?: string,
+    formData?: ModelWithString,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/formData/',
+        query: {
+            'parameter': parameter,
+        },
+        formData: formData,
+        mediaType: 'multipart/form-data',
+    });
+}
 }
 "
 `;
@@ -6808,15 +6745,16 @@ exports[`v3 should generate: test/generated/v3/services/HeaderService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class HeaderService {
     /**
      * @returns string Successful response
      * @throws ApiError
      */
-    public static callWithResultFromHeader(): CancelablePromise<string> {
-        return __request(OpenAPI, {
+    public static callWithResultFromHeader(client: Client): CancelablePromise<ApiResult<string>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/header',
             responseHeader: 'operation-location',
@@ -6837,42 +6775,43 @@ exports[`v3 should generate: test/generated/v3/services/MultipartService.ts 1`] 
 /* eslint-disable */
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipartService {
     /**
      * @param formData
      * @throws ApiError
      */
-    public static multipartRequest(
-        formData?: {
-            content?: Blob;
-            data?: ModelWithString | null;
-        },
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/multipart',
-            formData: formData,
-            mediaType: 'multipart/form-data',
-        });
-    }
-    /**
-     * @returns any OK
-     * @throws ApiError
-     */
-    public static multipartResponse(): CancelablePromise<{
-        file?: Blob;
-        metadata?: {
-            foo?: string;
-            bar?: string;
-        };
-    }> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/multipart',
-        });
-    }
+    public static multipartRequest(client: Client,
+    formData?: {
+        content?: Blob;
+        data?: ModelWithString | null;
+    },
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/multipart',
+        formData: formData,
+        mediaType: 'multipart/form-data',
+    });
+}
+/**
+ * @returns any OK
+ * @throws ApiError
+ */
+public static multipartResponse(client: Client): CancelablePromise<ApiResult<{
+    file?: Blob;
+    metadata?: {
+        foo?: string;
+        bar?: string;
+    };
+}>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/multipart',
+    });
+}
 }
 "
 `;
@@ -6883,15 +6822,16 @@ exports[`v3 should generate: test/generated/v3/services/MultipleTags1Service.ts 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipleTags1Service {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static dummyA(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyA(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/a',
         });
@@ -6900,8 +6840,8 @@ export class MultipleTags1Service {
      * @returns void
      * @throws ApiError
      */
-    public static dummyB(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyB(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/b',
         });
@@ -6916,15 +6856,16 @@ exports[`v3 should generate: test/generated/v3/services/MultipleTags2Service.ts 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipleTags2Service {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static dummyA(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyA(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/a',
         });
@@ -6933,8 +6874,8 @@ export class MultipleTags2Service {
      * @returns void
      * @throws ApiError
      */
-    public static dummyB(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyB(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/b',
         });
@@ -6949,15 +6890,16 @@ exports[`v3 should generate: test/generated/v3/services/MultipleTags3Service.ts 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class MultipleTags3Service {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static dummyB(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static dummyB(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/multiple-tags/b',
         });
@@ -6972,15 +6914,16 @@ exports[`v3 should generate: test/generated/v3/services/NoContentService.ts 1`] 
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class NoContentService {
     /**
      * @returns void
      * @throws ApiError
      */
-    public static callWithNoContentResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static callWithNoContentResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/no-content',
         });
@@ -6997,8 +6940,9 @@ exports[`v3 should generate: test/generated/v3/services/ParametersService.ts 1`]
 import type { ModelWithString } from '../models/ModelWithString';
 import type { Pageable } from '../models/Pageable';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ParametersService {
     /**
      * @param parameterHeader This is the parameter that goes into the header
@@ -7009,122 +6953,122 @@ export class ParametersService {
      * @param requestBody This is the parameter that goes into the body
      * @throws ApiError
      */
-    public static callWithParameters(
-        parameterHeader: string | null,
-        parameterQuery: string | null,
-        parameterForm: string | null,
-        parameterCookie: string | null,
-        parameterPath: string | null,
-        requestBody: ModelWithString | null,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/parameters/{parameterPath}',
-            path: {
-                'parameterPath': parameterPath,
-            },
-            cookies: {
-                'parameterCookie': parameterCookie,
-            },
-            headers: {
-                'parameterHeader': parameterHeader,
-            },
-            query: {
-                'parameterQuery': parameterQuery,
-            },
-            formData: {
-                'parameterForm': parameterForm,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param parameterHeader This is the parameter that goes into the request header
-     * @param parameterQuery This is the parameter that goes into the request query params
-     * @param parameterForm This is the parameter that goes into the request form data
-     * @param parameterCookie This is the parameter that goes into the cookie
-     * @param requestBody This is the parameter that goes into the body
-     * @param parameterPath1 This is the parameter that goes into the path
-     * @param parameterPath2 This is the parameter that goes into the path
-     * @param parameterPath3 This is the parameter that goes into the path
-     * @param _default This is the parameter with a reserved keyword
-     * @throws ApiError
-     */
-    public static callWithWeirdParameterNames(
-        parameterHeader: string | null,
-        parameterQuery: string | null,
-        parameterForm: string | null,
-        parameterCookie: string | null,
-        requestBody: ModelWithString | null,
-        parameterPath1?: string,
-        parameterPath2?: string,
-        parameterPath3?: string,
-        _default?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/parameters/{parameter.path.1}/{parameter-path-2}/{PARAMETER-PATH-3}',
-            path: {
-                'parameter.path.1': parameterPath1,
-                'parameter-path-2': parameterPath2,
-                'PARAMETER-PATH-3': parameterPath3,
-            },
-            cookies: {
-                'PARAMETER-COOKIE': parameterCookie,
-            },
-            headers: {
-                'parameter.header': parameterHeader,
-            },
-            query: {
-                'default': _default,
-                'parameter-query': parameterQuery,
-            },
-            formData: {
-                'parameter_form': parameterForm,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param requestBody This is a required parameter
-     * @param parameter This is an optional parameter
-     * @throws ApiError
-     */
-    public static getCallWithOptionalParam(
-        requestBody: ModelWithString,
-        parameter?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/parameters/',
-            query: {
-                'parameter': parameter,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param parameter This is a required parameter
-     * @param requestBody This is an optional parameter
-     * @throws ApiError
-     */
-    public static postCallWithOptionalParam(
-        parameter: Pageable,
-        requestBody?: ModelWithString,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/parameters/',
-            query: {
-                'parameter': parameter,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
+    public static callWithParameters(client: Client,
+    parameterHeader: string | null,
+    parameterQuery: string | null,
+    parameterForm: string | null,
+    parameterCookie: string | null,
+    parameterPath: string | null,
+    requestBody: ModelWithString | null,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/parameters/{parameterPath}',
+        path: {
+            'parameterPath': parameterPath,
+        },
+        cookies: {
+            'parameterCookie': parameterCookie,
+        },
+        headers: {
+            'parameterHeader': parameterHeader,
+        },
+        query: {
+            'parameterQuery': parameterQuery,
+        },
+        formData: {
+            'parameterForm': parameterForm,
+        },
+        body: requestBody,
+        mediaType: 'application/json',
+    });
+}
+/**
+ * @param parameterHeader This is the parameter that goes into the request header
+ * @param parameterQuery This is the parameter that goes into the request query params
+ * @param parameterForm This is the parameter that goes into the request form data
+ * @param parameterCookie This is the parameter that goes into the cookie
+ * @param requestBody This is the parameter that goes into the body
+ * @param parameterPath1 This is the parameter that goes into the path
+ * @param parameterPath2 This is the parameter that goes into the path
+ * @param parameterPath3 This is the parameter that goes into the path
+ * @param _default This is the parameter with a reserved keyword
+ * @throws ApiError
+ */
+public static callWithWeirdParameterNames(client: Client,
+parameterHeader: string | null,
+parameterQuery: string | null,
+parameterForm: string | null,
+parameterCookie: string | null,
+requestBody: ModelWithString | null,
+parameterPath1?: string,
+parameterPath2?: string,
+parameterPath3?: string,
+_default?: string,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/parameters/{parameter.path.1}/{parameter-path-2}/{PARAMETER-PATH-3}',
+        path: {
+            'parameter.path.1': parameterPath1,
+            'parameter-path-2': parameterPath2,
+            'PARAMETER-PATH-3': parameterPath3,
+        },
+        cookies: {
+            'PARAMETER-COOKIE': parameterCookie,
+        },
+        headers: {
+            'parameter.header': parameterHeader,
+        },
+        query: {
+            'default': _default,
+            'parameter-query': parameterQuery,
+        },
+        formData: {
+            'parameter_form': parameterForm,
+        },
+        body: requestBody,
+        mediaType: 'application/json',
+    });
+}
+/**
+ * @param requestBody This is a required parameter
+ * @param parameter This is an optional parameter
+ * @throws ApiError
+ */
+public static getCallWithOptionalParam(client: Client,
+requestBody: ModelWithString,
+parameter?: string,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/parameters/',
+        query: {
+            'parameter': parameter,
+        },
+        body: requestBody,
+        mediaType: 'application/json',
+    });
+}
+/**
+ * @param parameter This is a required parameter
+ * @param requestBody This is an optional parameter
+ * @throws ApiError
+ */
+public static postCallWithOptionalParam(client: Client,
+parameter: Pageable,
+requestBody?: ModelWithString,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/parameters/',
+        query: {
+            'parameter': parameter,
+        },
+        body: requestBody,
+        mediaType: 'application/json',
+    });
+}
 }
 "
 `;
@@ -7136,28 +7080,29 @@ exports[`v3 should generate: test/generated/v3/services/RequestBodyService.ts 1`
 /* eslint-disable */
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class RequestBodyService {
     /**
      * @param parameter This is a reusable parameter
      * @param requestBody A reusable request body
      * @throws ApiError
      */
-    public static postApiRequestBody(
-        parameter?: string,
-        requestBody?: ModelWithString,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/requestBody/',
-            query: {
-                'parameter': parameter,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
+    public static postApiRequestBody(client: Client,
+    parameter?: string,
+    requestBody?: ModelWithString,
+): CancelablePromise<ApiResult<void>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/requestBody/',
+        query: {
+            'parameter': parameter,
+        },
+        body: requestBody,
+        mediaType: 'application/json',
+    });
+}
 }
 "
 `;
@@ -7171,15 +7116,16 @@ import type { ModelThatExtends } from '../models/ModelThatExtends';
 import type { ModelThatExtendsExtends } from '../models/ModelThatExtendsExtends';
 import type { ModelWithString } from '../models/ModelWithString';
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class ResponseService {
     /**
      * @returns ModelWithString
      * @throws ApiError
      */
-    public static callWithResponse(): CancelablePromise<ModelWithString> {
-        return __request(OpenAPI, {
+    public static callWithResponse(client: Client): CancelablePromise<ApiResult<ModelWithString>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/response',
         });
@@ -7188,8 +7134,8 @@ export class ResponseService {
      * @returns ModelWithString Message for default response
      * @throws ApiError
      */
-    public static callWithDuplicateResponses(): CancelablePromise<ModelWithString> {
-        return __request(OpenAPI, {
+    public static callWithDuplicateResponses(client: Client): CancelablePromise<ApiResult<ModelWithString>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/response',
             errors: {
@@ -7206,12 +7152,12 @@ export class ResponseService {
      * @returns ModelThatExtendsExtends Message for 202 response
      * @throws ApiError
      */
-    public static callWithResponses(): CancelablePromise<{
+    public static callWithResponses(client: Client): CancelablePromise<ApiResult<{
         readonly '@namespace.string'?: string;
         readonly '@namespace.integer'?: number;
         readonly value?: Array<ModelWithString>;
-    } | ModelWithString | ModelThatExtends | ModelThatExtendsExtends> {
-        return __request(OpenAPI, {
+    } | ModelWithString | ModelThatExtends | ModelThatExtendsExtends>> {
+        return __request(client, {
             method: 'PUT',
             url: '/api/v{api-version}/response',
             errors: {
@@ -7231,14 +7177,15 @@ exports[`v3 should generate: test/generated/v3/services/SimpleService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static getCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static getCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'GET',
             url: '/api/v{api-version}/simple',
         });
@@ -7246,8 +7193,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static putCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static putCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'PUT',
             url: '/api/v{api-version}/simple',
         });
@@ -7255,8 +7202,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static postCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static postCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'POST',
             url: '/api/v{api-version}/simple',
         });
@@ -7264,8 +7211,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static deleteCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static deleteCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'DELETE',
             url: '/api/v{api-version}/simple',
         });
@@ -7273,8 +7220,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static optionsCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static optionsCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'OPTIONS',
             url: '/api/v{api-version}/simple',
         });
@@ -7282,8 +7229,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static headCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static headCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'HEAD',
             url: '/api/v{api-version}/simple',
         });
@@ -7291,8 +7238,8 @@ export class SimpleService {
     /**
      * @throws ApiError
      */
-    public static patchCallWithoutParametersAndResponse(): CancelablePromise<void> {
-        return __request(OpenAPI, {
+    public static patchCallWithoutParametersAndResponse(client: Client): CancelablePromise<ApiResult<void>> {
+        return __request(client, {
             method: 'PATCH',
             url: '/api/v{api-version}/simple',
         });
@@ -7307,8 +7254,9 @@ exports[`v3 should generate: test/generated/v3/services/TypesService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class TypesService {
     /**
      * @param parameterArray This is an array parameter
@@ -7325,33 +7273,33 @@ export class TypesService {
      * @returns any Response is a simple object
      * @throws ApiError
      */
-    public static types(
-        parameterArray: Array<string> | null,
-        parameterDictionary: Record<string, any> | null,
-        parameterEnum: 'Success' | 'Warning' | 'Error' | null,
-        parameterNumber: number = 123,
-        parameterString: string | null = 'default',
-        parameterBoolean: boolean | null = true,
-        parameterObject: Record<string, any> | null = null,
-        id?: number,
-    ): CancelablePromise<number | string | boolean | Record<string, any>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v{api-version}/types',
-            path: {
-                'id': id,
-            },
-            query: {
-                'parameterNumber': parameterNumber,
-                'parameterString': parameterString,
-                'parameterBoolean': parameterBoolean,
-                'parameterObject': parameterObject,
-                'parameterArray': parameterArray,
-                'parameterDictionary': parameterDictionary,
-                'parameterEnum': parameterEnum,
-            },
-        });
-    }
+    public static types(client: Client,
+    parameterArray: Array<string> | null,
+    parameterDictionary: Record<string, any> | null,
+    parameterEnum: 'Success' | 'Warning' | 'Error' | null,
+    parameterNumber: number = 123,
+    parameterString: string | null = 'default',
+    parameterBoolean: boolean | null = true,
+    parameterObject: Record<string, any> | null = null,
+    id?: number,
+): CancelablePromise<ApiResult<number | string | boolean | Record<string, any>>> {
+    return __request(client, {
+        method: 'GET',
+        url: '/api/v{api-version}/types',
+        path: {
+            'id': id,
+        },
+        query: {
+            'parameterNumber': parameterNumber,
+            'parameterString': parameterString,
+            'parameterBoolean': parameterBoolean,
+            'parameterObject': parameterObject,
+            'parameterArray': parameterArray,
+            'parameterDictionary': parameterDictionary,
+            'parameterEnum': parameterEnum,
+        },
+    });
+}
 }
 "
 `;
@@ -7362,25 +7310,26 @@ exports[`v3 should generate: test/generated/v3/services/UploadService.ts 1`] = `
 /* tslint:disable */
 /* eslint-disable */
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { OpenAPI } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
+import { ApiResult } from '../core/ApiResult';
 export class UploadService {
     /**
      * @param file Supply a file reference for upload
      * @returns boolean
      * @throws ApiError
      */
-    public static uploadFile(
-        file: Blob,
-    ): CancelablePromise<boolean> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v{api-version}/upload',
-            formData: {
-                'file': file,
-            },
-        });
-    }
+    public static uploadFile(client: Client,
+    file: Blob,
+): CancelablePromise<ApiResult<boolean>> {
+    return __request(client, {
+        method: 'POST',
+        url: '/api/v{api-version}/upload',
+        formData: {
+            'file': file,
+        },
+    });
+}
 }
 "
 `;

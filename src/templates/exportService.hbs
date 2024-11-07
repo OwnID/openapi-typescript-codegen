@@ -1,35 +1,15 @@
 {{>header}}
 
-{{#equals @root.httpClient 'angular'}}
-{{#if @root.exportClient}}
-import { Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
-{{else}}
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import type { Observable } from 'rxjs';
-{{/if}}
-
-{{/equals}}
 {{#if imports}}
 {{#each imports}}
 import type { {{{this}}} } from '../models/{{{this}}}';
 {{/each}}
 
 {{/if}}
-{{#notEquals @root.httpClient 'angular'}}
 import type { CancelablePromise } from '../core/CancelablePromise';
-{{/notEquals}}
-{{#if @root.exportClient}}
-{{#equals @root.httpClient 'angular'}}
-import { BaseHttpRequest } from '../core/BaseHttpRequest';
-{{else}}
-import type { BaseHttpRequest } from '../core/BaseHttpRequest';
-{{/equals}}
-{{else}}
-import { OpenAPI, OpenAPIConfig } from '../core/OpenAPI';
+import { Client } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
-{{/if}}
+import { ApiResult } from '../core/ApiResult';
 
 {{#equals @root.httpClient 'angular'}}
 @Injectable({
@@ -71,21 +51,11 @@ export class {{{name}}}{{{@root.postfix}}} {
 	 * @throws ApiError
 	 */
 	{{#if @root.exportClient}}
-	{{#equals @root.httpClient 'angular'}}
-	public {{{name}}}({{>parameters}}): Observable<{{>result}}> {
-		return this.httpRequest.request({
-	{{else}}
 	public {{{name}}}({{>parameters}}): CancelablePromise<{{>result}}> {
 		return this.httpRequest.request({
-	{{/equals}}
 	{{else}}
-	{{#equals @root.httpClient 'angular'}}
-	public {{{name}}}({{>parameters}}{{#if parameters}}, {{/if}}config?: Partial<OpenAPIConfig>): Observable<{{>result}}> {
-		return __request({...OpenAPI, ...(config || {})}, this.http, {
-	{{else}}
-	public static {{{name}}}({{>parameters}}{{#if parameters}}, {{/if}}config?: Partial<OpenAPIConfig>): CancelablePromise<{{>result}}> {
-		return __request({...OpenAPI, ...(config || {})}, {
-	{{/equals}}
+	public static {{{name}}}(client: Client{{#if parameters}}, {{/if}}{{>parameters}}): CancelablePromise<ApiResult<{{>result}}>> {
+		return __request(client, {
 	{{/if}}
 			method: '{{{method}}}',
 			url: '{{{path}}}',

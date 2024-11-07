@@ -1,5 +1,5 @@
 export const sendRequest = async (
-	config: OpenAPIConfig,
+	client: Client,
 	options: ApiRequestOptions,
 	url: string,
 	body: any,
@@ -15,10 +15,6 @@ export const sendRequest = async (
 		method: options.method,
 		signal: controller.signal,
 	};
-
-	if (config.WITH_CREDENTIALS) {
-		request.credentials = config.CREDENTIALS;
-	}
 
 	onCancel(() => controller.abort());
 

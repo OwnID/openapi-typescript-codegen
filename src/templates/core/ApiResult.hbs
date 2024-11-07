@@ -1,10 +1,11 @@
 {{>header}}
 
-export type ApiResult = {
+export type ApiResult<T> = {
 	readonly url: string;
 	readonly ok: boolean;
 	readonly status: number;
 	readonly statusText: string;
-	readonly body: any;
-	readonly headers: any;
+	readonly headers: Headers;
+	readonly body: T;
+	readonly error: any | undefined;
 };

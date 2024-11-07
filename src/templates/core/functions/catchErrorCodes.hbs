@@ -1,6 +1,6 @@
 
 
-export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): void => {
+export const catchErrorCodes = (options: ApiRequestOptions, ok: boolean, status: number, statusText: string, body: any): string | undefined => {
 	const errors: Record<number, string> = {
 		400: 'Bad Request',
 		401: 'Unauthorized',
@@ -12,24 +12,24 @@ export const catchErrorCodes = (options: ApiRequestOptions, result: ApiResult): 
 		...options.errors,
 	}
 
-	const error = errors[result.status];
+	const error = errors[status];
 	if (error) {
-		throw new ApiError(options, result, error);
+		return error;
 	}
 
-	if (!result.ok) {
-		const errorStatus = result.status ?? 'unknown';
-		const errorStatusText = result.statusText ?? 'unknown';
+	if (!ok) {
+		const errorStatus = status ?? 'unknown';
+		const errorStatusText = statusText ?? 'unknown';
 		const errorBody = (() => {
 			try {
-				return JSON.stringify(result.body, null, 2);
+				return JSON.stringify(body, null, 2);
 			} catch (e) {
 				return undefined;
 			}
 		})();
 
-		throw new ApiError(options, result,
-			`Generic Error: status: ${errorStatus}; status text: ${errorStatusText}; body: ${errorBody}`
-		);
+		return `Generic Error: status: ${errorStatus}; status text: ${errorStatusText}; body: ${errorBody}`;
 	}
+
+	return undefined;
 };

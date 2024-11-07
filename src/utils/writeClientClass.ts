@@ -32,16 +32,5 @@ export const writeClientClass = async (
     indent: Indent,
     postfix: string
 ): Promise<void> => {
-    const templateResult = templates.client({
-        clientName,
-        httpClient,
-        postfix,
-        server: client.server,
-        version: client.version,
-        models: sortModelsByName(client.models),
-        services: sortServicesByName(client.services),
-        httpRequest: getHttpRequestName(httpClient),
-    });
-
-    await writeFile(resolve(outputPath, `${clientName}.ts`), i(f(templateResult), indent));
+    return ;
 };
