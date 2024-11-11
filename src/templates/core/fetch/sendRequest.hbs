@@ -41,7 +41,7 @@ function anySignal (signals: Array<AbortSignal | undefined | null>): ClearableSi
 }
 
 export const sendRequest = async (
-	client: Client,
+	client: ClientOptions,
 	options: ApiRequestOptions,
 	url: string,
 	body: any,

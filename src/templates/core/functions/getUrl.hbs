@@ -1,4 +1,4 @@
-const getUrl = (client: Client, options: ApiRequestOptions): string => {
+const getUrl = (client: ClientOptions, options: ApiRequestOptions): string => {
 	const encoder = encodeURI;
 
 	const path = options.url

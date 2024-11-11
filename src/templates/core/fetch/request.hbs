@@ -4,7 +4,7 @@ import type { ApiRequestOptions } from './ApiRequestOptions';
 import type { ApiResult } from './ApiResult';
 import { CancelablePromise } from './CancelablePromise';
 import type { OnCancel } from './CancelablePromise';
-import type { Client } from './OpenAPI';
+import type { ClientOptions } from './OpenAPI';
 
 {{>functions/isDefined}}
 
@@ -61,7 +61,7 @@ import type { Client } from './OpenAPI';
  * @returns CancelablePromise<T>
  * @throws ApiError
  */
-export const request = <T>(client: Client, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
+export const request = <T>(client: ClientOptions, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
 	return new CancelablePromise(async (resolve, reject, onCancel) => {
 		const url = getUrl(client, options);
 		const formData = getFormData(options);

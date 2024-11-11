@@ -7,7 +7,7 @@ import type { {{{this}}} } from '../models/{{{this}}}';
 
 {{/if}}
 import type { CancelablePromise } from '../core/CancelablePromise';
-import { Client } from '../core/OpenAPI';
+import { ClientOptions } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 import { ApiResult } from '../core/ApiResult';
 
@@ -54,7 +54,7 @@ export class {{{name}}}{{{@root.postfix}}} {
 	public {{{name}}}({{>parameters}}): CancelablePromise<{{>result}}> {
 		return this.httpRequest.request({
 	{{else}}
-	public static {{{name}}}(client: Client{{#if parameters}}, {{/if}}{{>parameters}}): CancelablePromise<ApiResult<{{>result}}>> {
+	public static {{{name}}}(client: ClientOptions{{#if parameters}}, {{/if}}{{>parameters}}): CancelablePromise<ApiResult<{{>result}}>> {
 		return __request(client, {
 	{{/if}}
 			method: '{{{method}}}',

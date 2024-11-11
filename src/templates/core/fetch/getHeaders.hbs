@@ -1,4 +1,4 @@
-export const getHeaders = async (client: Client, options: ApiRequestOptions): Promise<Headers> => {
+export const getHeaders = async (client: ClientOptions, options: ApiRequestOptions): Promise<Headers> => {
 	const [token, additionalHeaders] = await Promise.all([
 		resolve(options, client.accessToken),
 		resolve(options, client.headers),

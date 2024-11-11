@@ -7,9 +7,9 @@ type Headers = Record<string, string>;
 
 export const DEFAULT_BASE_URL = '{{{server}}}';
 
-export type Client = {
-	baseUrl: string;
-	accessToken?: string | Resolver<string> | undefined;
-	headers?: Headers | Resolver<Headers> | undefined;
-	timeoutMsec?: number | undefined;
+export interface ClientOptions {
+	readonly baseUrl: string;
+	readonly accessToken?: string | Resolver<string> | undefined;
+	readonly headers?: Headers | Resolver<Headers> | undefined;
+	readonly timeoutMsec?: number | undefined;
 };
