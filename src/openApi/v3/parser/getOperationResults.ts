@@ -14,8 +14,8 @@ export const getOperationResults = (operationResponses: OperationResponse[]): Op
 
     // Filter out success response codes, but skip "204 No Content"
     operationResponses.forEach(operationResponse => {
-        const { code } = operationResponse;
-        if (code && code !== 204 && code >= 200 && code < 300) {
+        const { code, type } = operationResponse;
+        if (code && code !== 204 && code >= 200 && (code < 300 || code >= 400) && type !== 'any') {
             operationResults.push(operationResponse);
         }
     });
