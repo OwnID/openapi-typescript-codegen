@@ -5,7 +5,7 @@ export { {{{clientName}}} } from './{{{clientName}}}';
 
 {{/if}}
 {{#if @root.exportCore}}
-export { ApiResult } from './core/ApiResult';
+export { {{>apiResultExport}} } from './core/ApiResult';
 {{#if @root.exportClient}}
 export { BaseHttpRequest } from './core/BaseHttpRequest';
 {{/if}}

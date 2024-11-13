@@ -10,15 +10,8 @@ const areEqual = (a: Model, b: Model): boolean => {
 };
 
 export const getOperationResults = (operationResponses: OperationResponse[]): OperationResponse[] => {
-    const operationResults: OperationResponse[] = [];
 
-    // Filter out success response codes, but skip "204 No Content"
-    operationResponses.forEach(operationResponse => {
-        const { code, type } = operationResponse;
-        if (code && code !== 204 && code >= 200 && (code < 300 || code >= 400) && type !== 'any') {
-            operationResults.push(operationResponse);
-        }
-    });
+    const operationResults = [...operationResponses];
 
     if (!operationResults.length) {
         operationResults.push({
@@ -45,7 +38,7 @@ export const getOperationResults = (operationResponses: OperationResponse[]): Op
     return operationResults.filter((operationResult, index, arr) => {
         return (
             arr.findIndex(item => {
-                return areEqual(item, operationResult);
+                return item.code === operationResult.code && areEqual(item, operationResult);
             }) === index
         );
     });

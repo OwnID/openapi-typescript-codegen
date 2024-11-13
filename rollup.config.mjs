@@ -32,6 +32,8 @@ const handlebarsPlugin = () => ({
                     ifdef: true,
                     equals: true,
                     notEquals: true,
+                    lt: true,
+                    gte: true,
                     containsSpaces: true,
                     union: true,
                     intersection: true,
@@ -39,6 +41,7 @@ const handlebarsPlugin = () => ({
                     escapeComment: true,
                     escapeDescription: true,
                     camelCase: true,
+                    distinct: true
                 },
             });
             return `export default ${templateSpec};`;

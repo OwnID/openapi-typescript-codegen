@@ -9,7 +9,7 @@ import type { {{{this}}} } from '../models/{{{this}}}';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { ClientOptions } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
-import { ApiResult } from '../core/ApiResult';
+import { {{>apiResultExport}} } from '../core/ApiResult';
 
 {{#equals @root.httpClient 'angular'}}
 @Injectable({
@@ -28,6 +28,28 @@ export class {{{name}}}{{{@root.postfix}}} {
 	{{/if}}
 
 	{{#each operations}}
+	private static __mapResponse_{{{name}}}(
+		response: ApiResult<{{>resultRaw}}>,
+	): {{>resultsToResponse}} {
+		{{#each results}}
+		if ({{#lt code 400}}!response.error{{/lt}}{{#gte code 400}}response.error{{/gte}} && response.httpCode==={{{code}}}) {
+			return response as {{>resultToResponse}};
+		}
+		{{/each}}
+		if (response.error && response.httpCode===0) {
+			return response as ApiNetworkErrorResponse;
+		}
+		return {
+			...response,
+			httpCode: 0,
+			error: {
+				message: "Unmapped response",
+				originalHttpCode: response.httpCode,
+				originalError: response.error,
+			},
+		} as ApiUnmappedResponse;
+	}
+
 	/**
 	{{#if deprecated}}
 	 * @deprecated
@@ -45,17 +67,13 @@ export class {{{name}}}{{{@root.postfix}}} {
 	{{/each}}
 	{{/if}}
 	{{/unless}}
-	{{#each results}}
-	 * @returns {{{type}}} {{#if description}}{{{escapeComment description}}}{{/if}}
-	{{/each}}
-	 * @throws ApiError
 	 */
 	{{#if @root.exportClient}}
-	public {{{name}}}({{>parameters}}): CancelablePromise<{{>result}}> {
+	public {{{name}}}({{>parameters}}): CancelablePromise<{{>resultRaw}}> {
 		return this.httpRequest.request({
 	{{else}}
-	public static {{{name}}}(client: ClientOptions{{#if parameters}}, {{/if}}{{>parameters}}): CancelablePromise<ApiResult<{{>result}}>> {
-		return __request(client, {
+	public static {{{name}}}(client: ClientOptions{{#if parameters}}, {{/if}}{{>parameters}}): CancelablePromise<{{>resultsToResponse}}> {
+		return __request<{{>resultRaw}}>(client, {
 	{{/if}}
 			method: '{{{method}}}',
 			url: '{{{path}}}',
@@ -118,7 +136,7 @@ export class {{{name}}}{{{@root.postfix}}} {
 				{{/each}}
 			},
 			{{/if}}
-		});
+		}).then(this.__mapResponse_{{{name}}});
 	}
 
 	{{/each}}

@@ -1,11 +1,69 @@
 {{>header}}
 
+const HTTP_INVALID = 0;
+const HTTP_OK = 200;
+const HTTP_ACCEPTED = 201;
+const HTTP_CREATED = 202;
+const HTTP_NO_CONTENT = 204;
+const HTTP_FORBIDDEN = 403;
+
+type ErrorType = Omit<string | object, ''>;
+
 export interface ApiResult<T> {
-	readonly url: string;
-	readonly type: 'success' | 'failure';
-	readonly httpCode: number;
-	readonly httpCodeText: string;
-	readonly responseHeaders: Headers;
-	readonly body: T | undefined;
-	readonly error: any | undefined;
-};
+  readonly url: string;
+  readonly httpCode: number;
+  readonly responseHeaders: Headers;
+  readonly body: T | undefined;
+  readonly error: ErrorType | undefined;
+}
+
+interface ApiSuccessResponse<TResBody, THttpCode extends number> extends ApiResult<TResBody> {
+  readonly httpCode: THttpCode;
+  readonly error: undefined;
+}
+
+interface ApiSuccessWithBodyResponse<TResBody, THttpCode extends number>
+  extends ApiSuccessResponse<TResBody, THttpCode> {
+  readonly body: TResBody;
+}
+
+export type ApiOkResponse<T> = ApiSuccessWithBodyResponse<T, typeof HTTP_OK>;
+
+export type ApiCreatedResponse<T> = ApiSuccessWithBodyResponse<T, typeof HTTP_CREATED>;
+
+export type ApiAcceptedResponse<T> = ApiSuccessWithBodyResponse<T, typeof HTTP_ACCEPTED>;
+
+export interface ApiOkEmptyResponse extends ApiResult<never> {
+  readonly httpCode: typeof HTTP_NO_CONTENT;
+  readonly error: undefined;
+  readonly body: undefined;
+}
+
+interface ApiGenericErrorResponse extends ApiResult<unknown> {
+  readonly error: ErrorType;
+}
+
+export interface ApiErrorResponse<THttpCode extends number> extends ApiGenericErrorResponse {
+  readonly httpCode: THttpCode;
+}
+
+interface ApiErrorExcludingResponse<THttpCode extends number> extends ApiGenericErrorResponse {
+  readonly httpCode: Exclude<number, THttpCode>;
+}
+
+export interface ApiErrorWithBodyResponse<TResBody, THttpCode extends number> extends ApiResult<TResBody> {
+  readonly httpCode: THttpCode;
+  readonly error: ErrorType;
+}
+
+export type ApiNetworkErrorResponse = ApiErrorResponse<typeof HTTP_INVALID>;
+
+export type ApiForbiddenResponse<TResBody> = ApiErrorWithBodyResponse<TResBody, typeof HTTP_FORBIDDEN>;
+
+export interface ApiUnmappedResponse extends ApiErrorResponse<typeof HTTP_INVALID> {
+  error: {
+    readonly message: string;
+    readonly originalHttpCode: number;
+    readonly originalError: ErrorType | undefined;
+  };
+}
