@@ -3,6 +3,7 @@ import Handlebars from 'handlebars/runtime';
 import { HttpClient } from '../HttpClient';
 import templateCoreApiRequestOptions from '../templates/core/ApiRequestOptions.hbs';
 import templateCoreApiResult from '../templates/core/ApiResult.hbs';
+import apiResultExport from '../templates/core/ApiResultExport.hbs';
 import templateCancelablePromise from '../templates/core/CancelablePromise.hbs';
 import fetchGetHeaders from '../templates/core/fetch/getHeaders.hbs';
 import fetchGetRequestBody from '../templates/core/fetch/getRequestBody.hbs';
@@ -39,7 +40,9 @@ import partialIsReadOnly from '../templates/partials/isReadOnly.hbs';
 import partialIsRequired from '../templates/partials/isRequired.hbs';
 import partialParameters from '../templates/partials/parameters.hbs';
 import partialResponseType from '../templates/partials/responseType.hbs';
-import partialResult from '../templates/partials/result.hbs';
+import partialResultRaw from '../templates/partials/resultRaw.hbs';
+import partialResultsToResponse from '../templates/partials/resultsToResponse.hbs';
+import partialResultToResponse from '../templates/partials/resultToResponse.hbs';
 import partialSchema from '../templates/partials/schema.hbs';
 import partialSchemaArray from '../templates/partials/schemaArray.hbs';
 import partialSchemaComposition from '../templates/partials/schemaComposition.hbs';
@@ -101,6 +104,7 @@ export const registerHandlebarTemplates = (root: {
             request: Handlebars.template(templateCoreRequest),
         },
     };
+    Handlebars.registerPartial('apiResultExport', Handlebars.template(apiResultExport));
 
     // Partials for the generations of the models, services, etc.
     Handlebars.registerPartial('exportEnum', Handlebars.template(partialExportEnum));
@@ -113,7 +117,9 @@ export const registerHandlebarTemplates = (root: {
     Handlebars.registerPartial('isRequired', Handlebars.template(partialIsRequired));
     Handlebars.registerPartial('parameters', Handlebars.template(partialParameters));
     Handlebars.registerPartial('responseType', Handlebars.template(partialResponseType));
-    Handlebars.registerPartial('result', Handlebars.template(partialResult));
+    Handlebars.registerPartial('resultRaw', Handlebars.template(partialResultRaw));
+    Handlebars.registerPartial('resultsToResponse', Handlebars.template(partialResultsToResponse));
+    Handlebars.registerPartial('resultToResponse', Handlebars.template(partialResultToResponse));
     Handlebars.registerPartial('schema', Handlebars.template(partialSchema));
     Handlebars.registerPartial('schemaArray', Handlebars.template(partialSchemaArray));
     Handlebars.registerPartial('schemaDictionary', Handlebars.template(partialSchemaDictionary));

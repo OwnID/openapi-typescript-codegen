@@ -1,0 +1,23 @@
+{{~#equals code 200}}
+ApiOkResponse<{{>type}}>
+{{~/equals}}
+{{~#equals code 201}}
+ApiCreatedResponse<{{>type}}>
+{{~/equals}}
+{{~#equals code 202}}
+ApiAcceptedResponse<{{>type}}>
+{{~/equals}}
+{{~#equals code 204}}
+ApiOkEmptyResponse
+{{~/equals}}
+{{#gte code 400}}
+	{{~#equals type 'any'}}
+ApiErrorResponse<{{code}}>
+	{{~else}}
+		{{~#equals code 403}}
+ApiForbiddenResponse<{{>type}}>
+		{{~else}}
+ApiErrorWithBodyResponse<{{>type}},{{code}}>
+		{{~/equals}}
+	{{~/equals}}
+{{/gte}}

@@ -1,11 +1,11 @@
 import camelCase from 'camelcase';
 import Handlebars from 'handlebars/runtime';
-import { EOL } from 'os';
+import {EOL} from 'os';
 
-import type { Enum } from '../client/interfaces/Enum';
-import type { Model } from '../client/interfaces/Model';
-import type { HttpClient } from '../HttpClient';
-import { unique } from './unique';
+import type {Enum} from '../client/interfaces/Enum';
+import type {Model} from '../client/interfaces/Model';
+import type {HttpClient} from '../HttpClient';
+import {unique} from './unique';
 
 export const registerHandlebarHelpers = (root: {
     httpClient: HttpClient;
@@ -35,6 +35,20 @@ export const registerHandlebarHelpers = (root: {
     );
 
     Handlebars.registerHelper(
+        'lt',
+        function (this: any, a: string, b: string, options: Handlebars.HelperOptions): string {
+            return a < b ? options.fn(this) : options.inverse(this);
+        }
+    );
+
+    Handlebars.registerHelper(
+        'gte',
+        function (this: any, a: string, b: string, options: Handlebars.HelperOptions): string {
+            return a >= b ? options.fn(this) : options.inverse(this);
+        }
+    );
+
+    Handlebars.registerHelper(
         'containsSpaces',
         function (this: any, value: string, options: Handlebars.HelperOptions): string {
             return /\s+/.test(value) ? options.fn(this) : options.inverse(this);
@@ -45,7 +59,7 @@ export const registerHandlebarHelpers = (root: {
         'union',
         function (this: any, properties: Model[], parent: string | undefined, options: Handlebars.HelperOptions) {
             const type = Handlebars.partials['type'];
-            const types = properties.map(property => type({ ...root, ...property, parent }));
+            const types = properties.map(property => type({...root, ...property, parent}));
             const uniqueTypes = types.filter(unique);
             let uniqueTypesString = uniqueTypes.join(' | ');
             if (uniqueTypes.length > 1) {
@@ -59,7 +73,7 @@ export const registerHandlebarHelpers = (root: {
         'intersection',
         function (this: any, properties: Model[], parent: string | undefined, options: Handlebars.HelperOptions) {
             const type = Handlebars.partials['type'];
-            const types = properties.map(property => type({ ...root, ...property, parent }));
+            const types = properties.map(property => type({...root, ...property, parent}));
             const uniqueTypes = types.filter(unique);
             let uniqueTypesString = uniqueTypes.join(' & ');
             if (uniqueTypes.length > 1) {
@@ -103,5 +117,17 @@ export const registerHandlebarHelpers = (root: {
 
     Handlebars.registerHelper('camelCase', function (value: string): string {
         return camelCase(value);
+    });
+
+    Handlebars.registerHelper('distinct', function(array: any[], property: string) {
+        const unique: any[] = [];
+        const seen = new Set();
+        array.forEach(item => {
+            if (!seen.has(item[property])) {
+                seen.add(item[property]);
+                unique.push(item);
+            }
+        });
+        return unique;
     });
 };
