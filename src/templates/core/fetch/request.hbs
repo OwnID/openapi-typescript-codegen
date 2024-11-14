@@ -70,12 +70,14 @@ export const request = <T>(client: ClientOptions, options: ApiRequestOptions): C
 				throw new Error('Request cancelled');
 			}
 
+	      	options = client.onBeforeRequest?.(options) ?? options;
+
 			const response = await sendRequest(client, options, url, body, formData, headers, onCancel);
 			const responseBody = await getResponseBody(response, options);
 			const responseHeader = getResponseHeader(response, options.responseHeader);
 			const resultBody = responseHeader ?? responseBody;
 
-			const result: ApiResult<T> = {
+			let result: ApiResult<T> = {
 				url,
 				httpCode: response.status,
 				responseHeaders: headers,
@@ -83,15 +85,19 @@ export const request = <T>(client: ClientOptions, options: ApiRequestOptions): C
 				error: catchErrorCodes(options, response.ok, response.status, resultBody),
 			};
 
+      		result = (client?.onAfterRequest?.(result) as ApiResult<T>) || result;
+
 			resolve(result);
 		} catch (error) {
-			resolve({
-				url,
-				httpCode: 0,
-				body: JSON.stringify(error) as T,
-				responseHeaders: headers,
-				error: error as (string | object),
-			});
+			let result = {
+      		  url,
+      		  httpCode: 0,
+      		  body: JSON.stringify(error) as T,
+      		  responseHeaders: headers,
+      		  error: error as string | object,
+      		} as ApiResult<T>;
+      		result = (client?.onAfterRequest?.(result) as ApiResult<T>) || result;
+      		resolve(result);
 		}
 	});
 };
