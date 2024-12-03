@@ -50,12 +50,14 @@ export const sendRequest = async (
 	onCancel: OnCancel
 ): Promise<Response> => {
 	const controller = new AbortController();
-	const signal = client.timeoutMsec
-		? anySignal([
+	let signal = controller.signal;
+	if (client.timeoutMsec || options.abortSignal) {
+		signal = anySignal([
 			controller.signal,
+			abortSignal,
 			AbortSignal.timeout(client.timeoutMsec)
-		])
-		: controller.signal;
+		].filter(s => !!s));
+	}
 
 	const request: RequestInit = {
 		headers,

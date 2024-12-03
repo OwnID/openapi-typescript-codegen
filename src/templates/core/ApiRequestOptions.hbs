@@ -13,4 +13,5 @@ export type ApiRequestOptions = {
 	readonly responseType?: 'blob';
 	readonly responseHeader?: string;
 	readonly errors?: Record<number, string>;
+	readonly abortSignal?: AbortSignal;
 };
