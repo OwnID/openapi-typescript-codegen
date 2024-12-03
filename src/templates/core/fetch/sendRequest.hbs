@@ -54,8 +54,8 @@ export const sendRequest = async (
 	if (client.timeoutMsec || options.abortSignal) {
 		signal = anySignal([
 			controller.signal,
-			abortSignal,
-			AbortSignal.timeout(client.timeoutMsec)
+			options.abortSignal,
+            client.timeoutMsec ? AbortSignal.timeout(client.timeoutMsec) : undefined
 		].filter(s => !!s));
 	}
 
