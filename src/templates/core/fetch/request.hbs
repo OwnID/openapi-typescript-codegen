@@ -80,7 +80,7 @@ export const request = <T>(client: ClientOptions, options: ApiRequestOptions): C
 			let result: ApiResult<T> = {
 				url,
 				httpCode: response.status,
-				responseHeaders: headers,
+				responseHeaders: response.headers,
 				body: resultBody,
 				error: catchErrorCodes(options, response.ok, response.status, resultBody),
 			};
