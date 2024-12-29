@@ -2,7 +2,7 @@ interface ClearableSignal extends AbortSignal {
   clear: () => void
 }
 
-function anySignal (signals: Array<AbortSignal | undefined | null>): ClearableSignal {
+export function anySignal (signals: Array<AbortSignal | undefined | null>): ClearableSignal {
   const controller = new globalThis.AbortController()
 
   function onAbort (): void {
