@@ -19,6 +19,14 @@ ApiErrorResponse<{{code}}>
 	{{~else}}
 		{{~#equals code 403}}
 ApiForbiddenResponse<{{>type}}>
+		{{else equals code 409}}
+ApiConflictResponse
+		{{else equals code 423}}
+ApiLockedResponse
+		{{else equals code 424}}
+ApiFailedDependencyResponse
+		{{else equals code 429}}
+ApiTooManyRequestsResponse
 		{{~else}}
 ApiErrorWithBodyResponse<{{>type}},{{code}}>
 		{{~/equals}}
