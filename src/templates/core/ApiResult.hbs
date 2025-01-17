@@ -83,5 +83,8 @@ export interface ApiNetworkErrorResponse extends ApiErrorResponse<typeof HTTP_NE
 
 export interface ApiUnmappedResponse extends ApiErrorResponse<number> {
   readonly httpCode: number;
-  readonly error: ErrorType;
+  readonly error: {
+	message: "Unmapped response http code";
+	originalError: ErrorType | undefined;
+  };
 }
