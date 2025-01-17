@@ -94,7 +94,9 @@ export const request = <T>(client: ClientOptions, options: ApiRequestOptions): C
       		  httpCode: 0,
       		  body: JSON.stringify(error) as T,
       		  responseHeaders: headers,
-      		  error: error as string | object,
+	          error: {
+	          	exception: error as string | object,
+	          },
       		} as ApiResult<T>;
       		result = (client?.onAfterRequest?.(result) as ApiResult<T>) || result;
       		resolve(result);

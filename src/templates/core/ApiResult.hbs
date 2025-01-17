@@ -78,7 +78,9 @@ export type ApiFailedDependencyResponse = ApiErrorResponse<typeof HTTP_FAILED_DE
 export type ApiTooManyRequestsResponse = ApiErrorResponse<typeof HTTP_TOO_MANY_REQUESTS>;
 
 export interface ApiNetworkErrorResponse extends ApiErrorResponse<typeof HTTP_NETWORK> {
-  error: string | object;
+  error: {
+    exception: string | object;
+  };
 }
 
 export interface ApiUnmappedResponse extends ApiErrorResponse<number> {
