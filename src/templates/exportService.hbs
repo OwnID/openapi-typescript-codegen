@@ -39,15 +39,7 @@ export class {{{name}}}{{{@root.postfix}}} {
 		if (response.error && response.httpCode===0) {
 			return response as ApiNetworkErrorResponse;
 		}
-		return {
-			...response,
-			httpCode: 0,
-			error: {
-				message: "Unmapped response",
-				originalHttpCode: response.httpCode,
-				originalError: response.error,
-			},
-		} as ApiUnmappedResponse;
+		return response as ApiUnmappedResponse;
 	}
 
 	/**

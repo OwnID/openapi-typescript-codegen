@@ -1,6 +1,6 @@
 {{>header}}
 
-const HTTP_INVALID = 0;
+const HTTP_NETWORK = 0;
 const HTTP_OK = 200;
 const HTTP_ACCEPTED = 201;
 const HTTP_CREATED = 202;
@@ -67,8 +67,6 @@ export interface ApiErrorWithBodyResponse<TResBody, THttpCode extends number> ex
   readonly error: ErrorType;
 }
 
-export type ApiNetworkErrorResponse = ApiErrorResponse<typeof HTTP_INVALID>;
-
 export type ApiForbiddenResponse<TResBody> = ApiErrorWithBodyResponse<TResBody, typeof HTTP_FORBIDDEN>;
 
 export type ApiConflictResponse = ApiErrorResponse<typeof HTTP_FORBIDDEN>;
@@ -79,10 +77,11 @@ export type ApiFailedDependencyResponse = ApiErrorResponse<typeof HTTP_FAILED_DE
 
 export type ApiTooManyRequestsResponse = ApiErrorResponse<typeof HTTP_TOO_MANY_REQUESTS>;
 
-export interface ApiUnmappedResponse extends ApiErrorResponse<typeof HTTP_INVALID> {
-  error: {
-    readonly message: string;
-    readonly originalHttpCode: number;
-    readonly originalError: ErrorType | undefined;
-  };
+export interface ApiNetworkErrorResponse extends ApiErrorResponse<typeof HTTP_NETWORK> {
+  error: string | object;
+}
+
+export interface ApiUnmappedResponse extends ApiErrorResponse<number> {
+  readonly httpCode: number;
+  readonly error: ErrorType;
 }
