@@ -61,6 +61,8 @@ import type { ClientOptions } from './OpenAPI';
  */
 export const request = <T>(client: ClientOptions, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
 	return new CancelablePromise(async (resolve, reject, onCancel) => {
+		options = client.onBeforeRequest?.(options) ?? options;
+
 		const url = getUrl(client, options);
 		const formData = getFormData(options);
 		const body = getRequestBody(options);
@@ -69,8 +71,6 @@ export const request = <T>(client: ClientOptions, options: ApiRequestOptions): C
 			if (onCancel.isCancelled) {
 				throw new Error('Request cancelled');
 			}
-
-	      	options = client.onBeforeRequest?.(options) ?? options;
 
 			const response = await sendRequest(client, options, url, body, formData, headers, onCancel);
 			const responseBody = await getResponseBody(response, options);
