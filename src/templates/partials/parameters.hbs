@@ -1,22 +1,62 @@
 {{#if parameters}}
 {{#if @root.useOptions~}}
 {
-{{#each parameters}}
-{{{name}}}{{#if default}} = {{{default}}}{{/if}},
-{{/each}}
+{{#if parametersPath}}
+pathParams,
+{{/if}}
+{{#if parametersCookie}}
+cookies,
+{{/if}}
+{{#if parametersHeader}}
+headers,
+{{/if}}
+{{#if parametersQuery}}
+query,
+{{/if}}
+{{#if parametersBody}}
+{{#equals parametersBody.in 'formData'}}
+{{{parametersBody.name}}},
+{{/equals}}
+{{#equals parametersBody.in 'body'}}
+{{{parametersBody.name}}},
+{{/equals}}
+{{/if}}
 }: {
-{{#each parameters}}
-{{#ifdef description deprecated}}
-/**
-{{#if description}}
- * {{{escapeComment description}}}
-{{/if}}
-{{#if deprecated}}
- * @deprecated
-{{/if}}
- */
-{{/ifdef}}
+{{#if parametersPath}}
+pathParams{{#unless parametersPathRequired}}?{{/unless}}: {
+{{#each parametersPath}}
 {{{name}}}{{>isRequired}}: {{>type}},
+{{/each}}
+},
+{{/if}}
+{{#if parametersCookie}}
+cookie{{#unless parametersCookieRequired}}?{{/unless}}: {
+{{#each parametersCookie}}
+{{{name}}}{{>isRequired}}: {{>type}},
+{{/each}}
+},
+{{/if}}
+{{#if parametersHeader}}
+headers{{#unless parametersHeaderRequired}}?{{/unless}}: {
+{{#each parametersHeader}}
+{{{name}}}{{>isRequired}}: {{>type}},
+{{/each}}
+},
+{{/if}}
+{{#if parametersQuery}}
+query{{#unless parametersQueryRequired}}?{{/unless}}: {
+{{#each parametersQuery}}
+{{{name}}}{{>isRequired}}: {{>type}},
+{{/each}}
+},
+{{/if}}
+{{#each parameters}}
+{{#equals in 'body'}}
+{{{name}}}{{>isRequired}}: {{>type}},
+{{/equals}}
+{{#equals in 'formData'}}
+{{{name}}}{{>isRequired}}: {{>type}},
+{{/equals}}
 {{/each}}
 }
 {{~else}}

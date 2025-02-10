@@ -77,32 +77,16 @@ export class {{{name}}}{{{@root.postfix}}} {
 			method: '{{{method}}}',
 			url: '{{{path}}}',
 			{{#if parametersPath}}
-			path: {
-				{{#each parametersPath}}
-				'{{{prop}}}': {{{name}}},
-				{{/each}}
-			},
+			path: pathParams,
 			{{/if}}
 			{{#if parametersCookie}}
-			cookies: {
-				{{#each parametersCookie}}
-				'{{{prop}}}': {{{name}}},
-				{{/each}}
-			},
+			cookies,
 			{{/if}}
 			{{#if parametersHeader}}
-			headers: {
-				{{#each parametersHeader}}
-				'{{{prop}}}': {{{name}}},
-				{{/each}}
-			},
+			headers,
 			{{/if}}
 			{{#if parametersQuery}}
-			query: {
-				{{#each parametersQuery}}
-				'{{{prop}}}': {{{name}}},
-				{{/each}}
-			},
+			query,
 			{{/if}}
 			{{#if parametersForm}}
 			formData: {

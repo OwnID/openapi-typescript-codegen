@@ -33,10 +33,15 @@ export const getOperation = (
         path: url,
         parameters: [...pathParams.parameters],
         parametersPath: [...pathParams.parametersPath],
+        parametersPathRequired: pathParams.parametersPath.some(p => p.isRequired),
         parametersQuery: [...pathParams.parametersQuery],
+        parametersQueryRequired: pathParams.parametersQuery.some(p => p.isRequired),
         parametersForm: [...pathParams.parametersForm],
+        parametersFormRequired: pathParams.parametersForm.some(p => p.isRequired),
         parametersHeader: [...pathParams.parametersHeader],
+        parametersHeaderRequired: pathParams.parametersHeader.some(p => p.isRequired),
         parametersCookie: [...pathParams.parametersCookie],
+        parametersCookieRequired: pathParams.parametersCookie.some(p => p.isRequired),
         parametersBody: pathParams.parametersBody,
         imports: [],
         errors: [],
@@ -50,10 +55,15 @@ export const getOperation = (
         operation.imports.push(...parameters.imports);
         operation.parameters.push(...parameters.parameters);
         operation.parametersPath.push(...parameters.parametersPath);
+        operation.parametersPathRequired = parameters.parametersPath.some(p => p.isRequired);
         operation.parametersQuery.push(...parameters.parametersQuery);
+        operation.parametersQueryRequired = parameters.parametersQuery.some(p => p.isRequired);
         operation.parametersForm.push(...parameters.parametersForm);
+        operation.parametersFormRequired = parameters.parametersForm.some(p => p.isRequired);
         operation.parametersHeader.push(...parameters.parametersHeader);
+        operation.parametersHeaderRequired = parameters.parametersHeader.some(p => p.isRequired);
         operation.parametersCookie.push(...parameters.parametersCookie);
+        operation.parametersCookieRequired = parameters.parametersCookie.some(p => p.isRequired);
         operation.parametersBody = parameters.parametersBody;
     }
 

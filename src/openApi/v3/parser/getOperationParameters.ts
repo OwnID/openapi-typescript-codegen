@@ -13,7 +13,12 @@ export const getOperationParameters = (openApi: OpenApi, parameters: OpenApiPara
         parametersForm: [],
         parametersCookie: [],
         parametersHeader: [],
-        parametersBody: null, // Not used in V3 -> @see requestBody
+        parametersCookieRequired: false,
+        parametersFormRequired: false,
+        parametersHeaderRequired: false,
+        parametersPathRequired: false,
+        parametersQueryRequired: false,
+        parametersBody: null // Not used in V3 -> @see requestBody
     };
 
     // Iterate over the parameters
