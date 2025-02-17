@@ -41,13 +41,11 @@ export type ApiAcceptedResponse<T> = ApiSuccessWithBodyResponse<T, typeof HTTP_A
 export interface ApiOkEmptyResponse extends ApiResult<never> {
   readonly httpCode: typeof HTTP_NO_CONTENT;
   readonly error: undefined;
-  readonly body: undefined;
 }
 
 export interface ApiRedirectResponse extends ApiResult<never> {
   readonly httpCode: typeof HTTP_REDIRECT;
   readonly error: undefined;
-  readonly body: undefined;
 }
 
 interface ApiGenericErrorResponse extends ApiResult<unknown> {
