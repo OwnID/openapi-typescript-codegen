@@ -61,7 +61,8 @@ import type { ClientOptions } from './OpenAPI';
  */
 export const request = <T>(client: ClientOptions, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
 	return new CancelablePromise(async (resolve, reject, onCancel) => {
-		options = client.onBeforeRequest?.(options) ?? options;
+		const alteredOptions = client.onBeforeRequest?.(options);
+		options = !!alteredOptions ? alteredOptions : options;
 
 		const url = getUrl(client, options);
 		const formData = getFormData(options);
