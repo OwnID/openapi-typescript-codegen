@@ -14,7 +14,7 @@ export const getOperationParameter = (openApi: OpenApi, parameter: OpenApiParame
         in: parameter.in,
         prop: parameter.name,
         export: 'interface',
-        name: getOperationParameterName(parameter.name),
+        name: parameter.name, // getOperationParameterName(parameter.name),
         type: 'any',
         base: 'any',
         template: null,

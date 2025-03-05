@@ -39,7 +39,7 @@ cookie{{#unless parametersCookieRequired}}?{{/unless}}: {
 {{#if parametersHeader}}
 headers{{#unless parametersHeaderRequired}}?{{/unless}}: {
 {{#each parametersHeader}}
-{{{name}}}{{>isRequired}}: {{>type}},
+"{{{name}}}"{{>isRequired}}: {{>type}},
 {{/each}}
 },
 {{/if}}
