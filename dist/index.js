@@ -4025,7 +4025,7 @@ var templateCoreApiResult = {"compiler":[8,">= 4.3.0"],"main":function(container
 },"usePartial":true,"useData":true};
 
 var apiResultExport = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "ApiResult,\nApiOkResponse,\nApiCreatedResponse,\nApiAcceptedResponse,\nApiOkEmptyResponse,\nApiRedirectResponse,\nApiErrorResponse,\nApiErrorWithBodyResponse,\nApiNetworkErrorResponse,\nApiForbiddenResponse,\nApiConflictResponse,\nApiLockedResponse,\nApiFailedDependencyResponse,\nApiTooManyRequestsResponse,\nApiUnmappedResponse";
+    return "ApiResult,\nApiOkResponse,\nApiCreatedResponse,\nApiAcceptedResponse,\nApiOkEmptyResponse,\nApiPartialContentResponse,\nApiRedirectResponse,\nApiErrorResponse,\nApiErrorWithBodyResponse,\nApiNetworkErrorResponse,\nApiForbiddenResponse,\nApiConflictResponse,\nApiLockedResponse,\nApiFailedDependencyResponse,\nApiTooManyRequestsResponse,\nApiUnmappedResponse";
 },"useData":true};
 
 var templateCancelablePromise = {"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -5625,8 +5625,6 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
 },"7":function(container,depth0,helpers,partials,data) {
     return "ApiOkEmptyResponse";
 },"9":function(container,depth0,helpers,partials,data) {
-    return "ApiRedirectResponse";
-},"11":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5634,14 +5632,27 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"type"),"any",{"name":"equals","hash":{},"fn":container.program(12, data, 0),"inverse":container.program(14, data, 0),"data":data,"loc":{"start":{"line":17,"column":1},"end":{"line":33,"column":13}}})) != null ? stack1 : "");
-},"12":function(container,depth0,helpers,partials,data) {
+  return "ApiPartialContentResponse<"
+    + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
+    + ">";
+},"11":function(container,depth0,helpers,partials,data) {
+    return "ApiRedirectResponse";
+},"13":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"type"),"any",{"name":"equals","hash":{},"fn":container.program(14, data, 0),"inverse":container.program(16, data, 0),"data":data,"loc":{"start":{"line":20,"column":1},"end":{"line":36,"column":13}}})) != null ? stack1 : "");
+},"14":function(container,depth0,helpers,partials,data) {
     var stack1;
 
   return "ApiErrorResponse<"
-    + ((stack1 = container.lambda(container.strict(depth0, "code", {"start":{"line":18,"column":19},"end":{"line":18,"column":23}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "code", {"start":{"line":21,"column":19},"end":{"line":21,"column":23}} ), depth0)) != null ? stack1 : "")
     + ">";
-},"14":function(container,depth0,helpers,partials,data) {
+},"16":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5649,8 +5660,8 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),403,{"name":"equals","hash":{},"fn":container.program(15, data, 0),"inverse":container.program(17, data, 0),"data":data,"loc":{"start":{"line":20,"column":2},"end":{"line":32,"column":14}}})) != null ? stack1 : "");
-},"15":function(container,depth0,helpers,partials,data) {
+  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),403,{"name":"equals","hash":{},"fn":container.program(17, data, 0),"inverse":container.program(19, data, 0),"data":data,"loc":{"start":{"line":23,"column":2},"end":{"line":35,"column":14}}})) != null ? stack1 : "");
+},"17":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5661,7 +5672,7 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
   return "ApiForbiddenResponse<"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ">\n";
-},"17":function(container,depth0,helpers,partials,data) {
+},"19":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5669,10 +5680,10 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),409,{"name":"equals","hash":{},"fn":container.program(18, data, 0),"inverse":container.program(20, data, 0),"data":data,"loc":{"start":{"line":22,"column":2},"end":{"line":32,"column":2}}})) != null ? stack1 : "");
-},"18":function(container,depth0,helpers,partials,data) {
-    return "ApiConflictResponse";
+  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),409,{"name":"equals","hash":{},"fn":container.program(20, data, 0),"inverse":container.program(22, data, 0),"data":data,"loc":{"start":{"line":25,"column":2},"end":{"line":35,"column":2}}})) != null ? stack1 : "");
 },"20":function(container,depth0,helpers,partials,data) {
+    return "ApiConflictResponse";
+},"22":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5680,10 +5691,10 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),423,{"name":"equals","hash":{},"fn":container.program(21, data, 0),"inverse":container.program(23, data, 0),"data":data,"loc":{"start":{"line":24,"column":2},"end":{"line":32,"column":2}}})) != null ? stack1 : "");
-},"21":function(container,depth0,helpers,partials,data) {
-    return "ApiLockedResponse";
+  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),423,{"name":"equals","hash":{},"fn":container.program(23, data, 0),"inverse":container.program(25, data, 0),"data":data,"loc":{"start":{"line":27,"column":2},"end":{"line":35,"column":2}}})) != null ? stack1 : "");
 },"23":function(container,depth0,helpers,partials,data) {
+    return "ApiLockedResponse";
+},"25":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5691,10 +5702,10 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),424,{"name":"equals","hash":{},"fn":container.program(24, data, 0),"inverse":container.program(26, data, 0),"data":data,"loc":{"start":{"line":26,"column":2},"end":{"line":32,"column":2}}})) != null ? stack1 : "");
-},"24":function(container,depth0,helpers,partials,data) {
-    return "ApiFailedDependencyResponse\n";
+  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),424,{"name":"equals","hash":{},"fn":container.program(26, data, 0),"inverse":container.program(28, data, 0),"data":data,"loc":{"start":{"line":29,"column":2},"end":{"line":35,"column":2}}})) != null ? stack1 : "");
 },"26":function(container,depth0,helpers,partials,data) {
+    return "ApiFailedDependencyResponse\n";
+},"28":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5702,10 +5713,10 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
         return undefined
     };
 
-  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),429,{"name":"equals","hash":{},"fn":container.program(27, data, 0),"inverse":container.program(29, data, 0),"data":data,"loc":{"start":{"line":28,"column":2},"end":{"line":32,"column":2}}})) != null ? stack1 : "");
-},"27":function(container,depth0,helpers,partials,data) {
-    return "ApiTooManyRequestsResponse";
+  return ((stack1 = lookupProperty(helpers,"equals").call(depth0 != null ? depth0 : (container.nullContext || {}),lookupProperty(depth0,"code"),429,{"name":"equals","hash":{},"fn":container.program(29, data, 0),"inverse":container.program(31, data, 0),"data":data,"loc":{"start":{"line":31,"column":2},"end":{"line":35,"column":2}}})) != null ? stack1 : "");
 },"29":function(container,depth0,helpers,partials,data) {
+    return "ApiTooManyRequestsResponse";
+},"31":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
           return parent[propertyName];
@@ -5716,7 +5727,7 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
   return "ApiErrorWithBodyResponse<"
     + ((stack1 = container.invokePartial(lookupProperty(partials,"type"),depth0,{"name":"type","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
     + ","
-    + ((stack1 = container.lambda(container.strict(depth0, "code", {"start":{"line":31,"column":37},"end":{"line":31,"column":41}} ), depth0)) != null ? stack1 : "")
+    + ((stack1 = container.lambda(container.strict(depth0, "code", {"start":{"line":34,"column":37},"end":{"line":34,"column":41}} ), depth0)) != null ? stack1 : "")
     + ">\n		";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), lookupProperty = container.lookupProperty || function(parent, propertyName) {
@@ -5730,8 +5741,9 @@ var partialResultToResponse = {"1":function(container,depth0,helpers,partials,da
     + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(depth0,"code"),201,{"name":"equals","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":4,"column":0},"end":{"line":6,"column":12}}})) != null ? stack1 : "")
     + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(depth0,"code"),202,{"name":"equals","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":7,"column":0},"end":{"line":9,"column":12}}})) != null ? stack1 : "")
     + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(depth0,"code"),204,{"name":"equals","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":10,"column":0},"end":{"line":12,"column":12}}})) != null ? stack1 : "")
-    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(depth0,"code"),302,{"name":"equals","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":13,"column":0},"end":{"line":15,"column":12}}})) != null ? stack1 : "")
-    + ((stack1 = lookupProperty(helpers,"gte").call(alias1,lookupProperty(depth0,"code"),400,{"name":"gte","hash":{},"fn":container.program(11, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":16,"column":0},"end":{"line":34,"column":8}}})) != null ? stack1 : "");
+    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(depth0,"code"),206,{"name":"equals","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":13,"column":0},"end":{"line":15,"column":12}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"equals").call(alias1,lookupProperty(depth0,"code"),302,{"name":"equals","hash":{},"fn":container.program(11, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":16,"column":0},"end":{"line":18,"column":12}}})) != null ? stack1 : "")
+    + ((stack1 = lookupProperty(helpers,"gte").call(alias1,lookupProperty(depth0,"code"),400,{"name":"gte","hash":{},"fn":container.program(13, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":19,"column":0},"end":{"line":37,"column":8}}})) != null ? stack1 : "");
 },"usePartial":true,"useData":true};
 
 var partialSchema = {"1":function(container,depth0,helpers,partials,data) {

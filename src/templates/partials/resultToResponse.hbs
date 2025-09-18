@@ -10,6 +10,9 @@ ApiAcceptedResponse<{{>type}}>
 {{~#equals code 204}}
 ApiOkEmptyResponse
 {{~/equals}}
+{{~#equals code 206}}
+ApiPartialContentResponse<{{>type}}>
+{{~/equals}}
 {{~#equals code 302}}
 ApiRedirectResponse
 {{~/equals}}
