@@ -21,6 +21,7 @@ export interface OnCancel {
 }
 
 export class CancelablePromise<T> implements Promise<T> {
+	key: string;
 	#isResolved: boolean;
 	#isRejected: boolean;
 	#isCancelled: boolean;
@@ -30,12 +31,14 @@ export class CancelablePromise<T> implements Promise<T> {
 	#reject?: (reason?: any) => void;
 
 	constructor(
+		key: string,
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
 			reject: (reason?: any) => void,
 			onCancel: OnCancel
 		) => void
 	) {
+		this.key = key;
 		this.#isResolved = false;
 		this.#isRejected = false;
 		this.#isCancelled = false;
@@ -87,11 +90,16 @@ export class CancelablePromise<T> implements Promise<T> {
 		return "Cancellable Promise";
 	}
 
+	get Key() {
+		return this.key;
+	}
+
   	public then<TResult1 = T, TResult2 = never>(
   	  onFulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
   	  onRejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
   	): CancelablePromise<TResult1 | TResult2> {
   	  return new CancelablePromise<TResult1 | TResult2>(
+		this.key,
   	    (resolve, reject, onCancel) => {
   	      // Forward the onCancel handler to maintain cancellation behavior
   	      onCancel(() => this.cancel());

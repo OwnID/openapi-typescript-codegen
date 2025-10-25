@@ -3,7 +3,7 @@ import { CancelablePromise } from './CancelablePromise';
 import type { OpenAPIConfig } from './OpenAPI';
 
 export const request = <T>(config: OpenAPIConfig, options: ApiRequestOptions): CancelablePromise<T> => {
-    return new CancelablePromise((resolve, reject, onCancel) => {
+    return new CancelablePromise("key", (resolve, reject, onCancel) => {
         const url = `${config.BASE}${options.path}`.replace('{api-version}', config.VERSION);
 
         try {
