@@ -20,8 +20,10 @@ export interface OnCancel {
 	(cancelHandler: () => void): void;
 }
 
+type KeyComponent = string | Record<string, unknown>;
+
 export class CancelablePromise<T> implements Promise<T> {
-	key: string;
+	key: KeyComponent[];
 	#isResolved: boolean;
 	#isRejected: boolean;
 	#isCancelled: boolean;
@@ -31,7 +33,7 @@ export class CancelablePromise<T> implements Promise<T> {
 	#reject?: (reason?: any) => void;
 
 	constructor(
-		key: string,
+		key: KeyComponent[],
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
 			reject: (reason?: any) => void,

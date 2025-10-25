@@ -60,7 +60,7 @@ import type { ClientOptions } from './OpenAPI';
  * @returns CancelablePromise<T>
  */
 export const request = <T>(client: ClientOptions, options: ApiRequestOptions): CancelablePromise<ApiResult<T>> => {
-	const key = `${options.method}|${options.url}`;
+	const key = [options.method, options.url, options.path || {}, options.query || {}];
 	return new CancelablePromise(key, async (resolve, reject, onCancel) => {
 		const alteredOptions = client.onBeforeRequest?.(options);
 		options = !!alteredOptions ? alteredOptions : options;
