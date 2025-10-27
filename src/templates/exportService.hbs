@@ -48,6 +48,15 @@ export class {{{name}}}{{{@root.postfix}}} {
 		} as ApiUnmappedResponse;
 	}
 
+	public static {{{name}}}__data() {
+		return {
+			name: '{{{name}}}',
+			method: '{{{method}}}',
+			path: '{{{path}}}',
+			keyPrefix: ['{{{method}}}', '{{{path}}}']
+		};
+	}
+
 	/**
 	{{#if deprecated}}
 	 * @deprecated
