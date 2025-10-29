@@ -3,7 +3,7 @@
 import type { ApiRequestOptions } from './ApiRequestOptions';
 import { ApiResult } from './ApiResult';
 
-type Resolver<T> = (options: ApiRequestOptions) => Promise<T>;
+type Resolver<T> = (options: ApiRequestOptions) => Promise<T | undefined>;
 type Headers = Record<string, string>;
 
 export const DEFAULT_BASE_URL = '{{{server}}}';

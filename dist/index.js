@@ -4161,7 +4161,7 @@ var templateCoreSettings = {"compiler":[8,">= 4.3.0"],"main":function(container,
     };
 
   return ((stack1 = container.invokePartial(lookupProperty(partials,"header"),depth0,{"name":"header","data":data,"helpers":helpers,"partials":partials,"decorators":container.decorators})) != null ? stack1 : "")
-    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport { ApiResult } from './ApiResult';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T>;\ntype Headers = Record<string, string>;\n\nexport const DEFAULT_BASE_URL = '"
+    + "\nimport type { ApiRequestOptions } from './ApiRequestOptions';\nimport { ApiResult } from './ApiResult';\n\ntype Resolver<T> = (options: ApiRequestOptions) => Promise<T | undefined>;\ntype Headers = Record<string, string>;\n\nexport const DEFAULT_BASE_URL = '"
     + ((stack1 = container.lambda(container.strict(depth0, "server", {"start":{"line":9,"column":36},"end":{"line":9,"column":42}} ), depth0)) != null ? stack1 : "")
     + "';\n\nexport interface ClientOptions {\n	readonly baseUrl: string;\n	readonly accessToken?: string | Resolver<string> | undefined;\n	readonly headers?: Headers | Resolver<Headers> | undefined;\n	readonly timeoutMsec?: number | undefined;\n	readonly onBeforeRequest?: (\n    	options: ApiRequestOptions\n  	) => ApiRequestOptions | undefined | void;\n  	readonly onAfterRequest?: (\n    	result: ApiResult<unknown>\n  	) => ApiResult<unknown> | undefined | void;\n};";
 },"usePartial":true,"useData":true};
