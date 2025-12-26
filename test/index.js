@@ -58,7 +58,8 @@ const generateRealWorldSpecs = async () => {
 
 const main = async () => {
     //await generate('./test/spec/v2.json', './test/generated/v2/');
-    await generate('/Users/liri/ownid/workspace/src/api/auth-server.openapi.yaml', '/Users/liri/ownid/workspace/src/sdk/ts/src/api-client/gen');
+    //await generate('/Users/liri/ownid/workspace/src/api/auth-server.openapi.yaml', '/Users/liri/ownid/workspace/src/sdk/ts/src/api-client/gen');
+    await generate('/Users/liri/ownid/workspace/src/api/console-server.openapi.yaml', '/Users/liri/ownid/workspace/src/apps/console-app/src/api-client/gen');
     // await generateRealWorldSpecs();
 };
 

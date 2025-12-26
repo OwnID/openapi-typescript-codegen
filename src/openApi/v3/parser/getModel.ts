@@ -59,6 +59,28 @@ export const getModel = (
         return model;
     }
 
+    if (definition.const !== undefined) {
+        model.export = 'generic';
+        if (typeof definition.const === 'string') {
+            model.type = `'${definition.const}'`;
+            model.base = `'${definition.const}'`;
+        } else if (typeof definition.const === 'number') {
+            model.type = String(definition.const);
+            model.base = String(definition.const);
+        } else if (typeof definition.const === 'boolean') {
+            model.type = String(definition.const);
+            model.base = String(definition.const);
+        } else if (definition.const === null) {
+            model.type = 'null';
+            model.base = 'null';
+        } else {
+            model.type = JSON.stringify(definition.const);
+            model.base = JSON.stringify(definition.const);
+        }
+        model.default = getModelDefault(definition, model);
+        return model;
+    }
+
     if (definition.enum && definition.type !== 'boolean' && (definition.type !== 'integer' || definition.description === undefined)) {
         const enumerators = getEnum(definition.enum);
         const extendedEnumerators = extendEnum(enumerators, definition);
