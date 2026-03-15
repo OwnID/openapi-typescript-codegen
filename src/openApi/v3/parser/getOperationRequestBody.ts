@@ -56,6 +56,7 @@ export const getOperationRequestBody = (openApi: OpenApi, body: OpenApiRequestBo
                 requestBody.base = model.base;
                 requestBody.template = model.template;
                 requestBody.link = model.link;
+                requestBody.dictionaryKey = model.dictionaryKey;
                 requestBody.isReadOnly = model.isReadOnly;
                 requestBody.isRequired = requestBody.isRequired || model.isRequired;
                 requestBody.isNullable = requestBody.isNullable || model.isNullable;

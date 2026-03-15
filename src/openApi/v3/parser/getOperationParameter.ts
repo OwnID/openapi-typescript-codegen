@@ -63,6 +63,7 @@ export const getOperationParameter = (openApi: OpenApi, parameter: OpenApiParame
             operationParameter.base = model.base;
             operationParameter.template = model.template;
             operationParameter.link = model.link;
+            operationParameter.dictionaryKey = model.dictionaryKey;
             operationParameter.isReadOnly = model.isReadOnly;
             operationParameter.isRequired = operationParameter.isRequired || model.isRequired;
             operationParameter.isNullable = operationParameter.isNullable || model.isNullable;

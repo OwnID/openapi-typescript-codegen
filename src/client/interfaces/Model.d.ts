@@ -8,6 +8,7 @@ export interface Model extends Schema {
     base: string;
     template: string | null;
     link: Model | null;
+    dictionaryKey?: Model | null;
     description: string | null;
     deprecated?: boolean;
     default?: string;

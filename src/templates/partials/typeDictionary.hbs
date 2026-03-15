@@ -1,5 +1,5 @@
 {{~#if link~}}
-Record<string, {{>type link}}>{{>isNullable}}
+Record<{{#if dictionaryKey}}{{>type dictionaryKey}}{{else}}string{{/if}}, {{>type link}}>{{>isNullable}}
 {{~else~}}
-Record<string, {{>base}}>{{>isNullable}}
+Record<{{#if dictionaryKey}}{{>type dictionaryKey}}{{else}}string{{/if}}, {{>base}}>{{>isNullable}}
 {{~/if~}}

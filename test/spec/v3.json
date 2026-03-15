@@ -1708,6 +1708,30 @@
                     }
                 }
             },
+            "DictionaryWithPropertyNamesInline": {
+                "description": "This is a dictionary with inline propertyNames",
+                "type": "object",
+                "propertyNames": {
+                    "type": "string",
+                    "enum": [
+                        "foo",
+                        "bar"
+                    ]
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/ModelWithString"
+                }
+            },
+            "DictionaryWithPropertyNamesReference": {
+                "description": "This is a dictionary with referenced propertyNames",
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/EnumWithStrings"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/ModelWithString"
+                }
+            },
             "ModelWithInteger": {
                 "description": "This is a model with one number property",
                 "type": "object",

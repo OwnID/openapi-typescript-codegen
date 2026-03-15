@@ -9,6 +9,18 @@ import { getModelDefault } from './getModelDefault';
 import { getModelProperties } from './getModelProperties';
 import { getType } from './getType';
 
+const getDictionaryKey = (openApi: OpenApi, definition: OpenApiSchema): Model | null => {
+    if (!definition.propertyNames) {
+        return null;
+    }
+
+    const dictionaryKey = getModel(openApi, definition.propertyNames);
+    return {
+        ...dictionaryKey,
+        isNullable: false,
+    };
+};
+
 export const getModel = (
     openApi: OpenApi,
     definition: OpenApiSchema,
@@ -22,6 +34,7 @@ export const getModel = (
         base: 'any',
         template: null,
         link: null,
+        dictionaryKey: null,
         description: definition.description || null,
         deprecated: definition.deprecated === true,
         isDefinition,
@@ -122,6 +135,7 @@ export const getModel = (
         (typeof definition.additionalProperties === 'object' || definition.additionalProperties === true)
     ) {
         const ap = typeof definition.additionalProperties === 'object' ? definition.additionalProperties : {};
+        model.dictionaryKey = getDictionaryKey(openApi, definition);
         if (ap.$ref) {
             const additionalProperties = getType(ap.$ref);
             model.export = 'dictionary';
@@ -129,6 +143,7 @@ export const getModel = (
             model.base = additionalProperties.base;
             model.template = additionalProperties.template;
             model.imports.push(...additionalProperties.imports);
+            model.imports.push(...(model.dictionaryKey?.imports || []));
             model.default = getModelDefault(definition, model);
             return model;
         } else {
@@ -139,6 +154,7 @@ export const getModel = (
             model.template = additionalProperties.template;
             model.link = additionalProperties;
             model.imports.push(...additionalProperties.imports);
+            model.imports.push(...(model.dictionaryKey?.imports || []));
             model.default = getModelDefault(definition, model);
             return model;
         }
@@ -195,7 +211,9 @@ export const getModel = (
             model.base = additionalProperties.base;
             model.template = additionalProperties.template;
             model.link = additionalProperties;
+            model.dictionaryKey = getDictionaryKey(openApi, definition);
             model.imports.push(...additionalProperties.imports);
+            model.imports.push(...(model.dictionaryKey?.imports || []));
             model.default = getModelDefault(definition, model);
             return model;
         }

@@ -33,6 +33,7 @@ export interface OpenApiSchema extends OpenApiReference, WithEnumExtension {
     not?: OpenApiSchema[];
     items?: OpenApiSchema;
     properties?: Dictionary<OpenApiSchema>;
+    propertyNames?: OpenApiSchema;
     additionalProperties?: boolean | OpenApiSchema;
     description?: string;
     format?:

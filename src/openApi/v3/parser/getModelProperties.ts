@@ -29,6 +29,7 @@ export const getModelProperties = (
                 | 'base'
                 | 'template'
                 | 'link'
+                | 'dictionaryKey'
                 | 'isNullable'
                 | 'imports'
                 | 'enum'
@@ -93,6 +94,7 @@ export const getModelProperties = (
                     base: model.base,
                     template: model.template,
                     link: model.link,
+                    dictionaryKey: model.dictionaryKey,
                     isNullable: model.isNullable || property.nullable === true,
                     imports: model.imports,
                     enum: model.enum,

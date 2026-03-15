@@ -544,6 +544,8 @@ export type { CommentWithSlashes } from './models/CommentWithSlashes';
 export type { Date } from './models/Date';
 export type { DictionaryWithArray } from './models/DictionaryWithArray';
 export type { DictionaryWithDictionary } from './models/DictionaryWithDictionary';
+export type { DictionaryWithPropertyNamesInline } from './models/DictionaryWithPropertyNamesInline';
+export type { DictionaryWithPropertyNamesReference } from './models/DictionaryWithPropertyNamesReference';
 export type { DictionaryWithProperties } from './models/DictionaryWithProperties';
 export type { DictionaryWithReference } from './models/DictionaryWithReference';
 export type { DictionaryWithString } from './models/DictionaryWithString';
@@ -593,6 +595,8 @@ export { $CommentWithSlashes } from './schemas/$CommentWithSlashes';
 export { $Date } from './schemas/$Date';
 export { $DictionaryWithArray } from './schemas/$DictionaryWithArray';
 export { $DictionaryWithDictionary } from './schemas/$DictionaryWithDictionary';
+export { $DictionaryWithPropertyNamesInline } from './schemas/$DictionaryWithPropertyNamesInline';
+export { $DictionaryWithPropertyNamesReference } from './schemas/$DictionaryWithPropertyNamesReference';
 export { $DictionaryWithProperties } from './schemas/$DictionaryWithProperties';
 export { $DictionaryWithReference } from './schemas/$DictionaryWithReference';
 export { $DictionaryWithString } from './schemas/$DictionaryWithString';
@@ -4194,6 +4198,33 @@ export type DictionaryWithDictionary = Record<string, Record<string, string>>;
 "
 `;
 
+exports[`v3 should generate: test/generated/v3/models/DictionaryWithPropertyNamesInline.ts 1`] = `
+"/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+import type { ModelWithString } from './ModelWithString';
+/**
+ * This is a dictionary with inline propertyNames
+ */
+export type DictionaryWithPropertyNamesInline = Record<'foo' | 'bar', ModelWithString>;
+"
+`;
+
+exports[`v3 should generate: test/generated/v3/models/DictionaryWithPropertyNamesReference.ts 1`] = `
+"/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+import type { EnumWithStrings } from './EnumWithStrings';
+import type { ModelWithString } from './ModelWithString';
+/**
+ * This is a dictionary with referenced propertyNames
+ */
+export type DictionaryWithPropertyNamesReference = Record<EnumWithStrings, ModelWithString>;
+"
+`;
+
 exports[`v3 should generate: test/generated/v3/models/DictionaryWithProperties.ts 1`] = `
 "/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
@@ -5462,6 +5493,34 @@ export const $DictionaryWithDictionary = {
         contains: {
             type: 'string',
         },
+    },
+} as const;
+"
+`;
+
+exports[`v3 should generate: test/generated/v3/schemas/$DictionaryWithPropertyNamesInline.ts 1`] = `
+"/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+export const $DictionaryWithPropertyNamesInline = {
+    type: 'dictionary',
+    contains: {
+        type: 'ModelWithString',
+    },
+} as const;
+"
+`;
+
+exports[`v3 should generate: test/generated/v3/schemas/$DictionaryWithPropertyNamesReference.ts 1`] = `
+"/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+export const $DictionaryWithPropertyNamesReference = {
+    type: 'dictionary',
+    contains: {
+        type: 'ModelWithString',
     },
 } as const;
 "

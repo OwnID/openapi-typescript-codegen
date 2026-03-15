@@ -54,6 +54,7 @@ export const getOperationResponse = (
                 operationResponse.base = model.base;
                 operationResponse.template = model.template;
                 operationResponse.link = model.link;
+                operationResponse.dictionaryKey = model.dictionaryKey;
                 operationResponse.isReadOnly = model.isReadOnly;
                 operationResponse.isRequired = model.isRequired;
                 operationResponse.isNullable = model.isNullable;
