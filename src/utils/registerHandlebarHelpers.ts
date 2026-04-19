@@ -28,6 +28,13 @@ export const registerHandlebarHelpers = (root: {
     );
 
     Handlebars.registerHelper(
+        'isStringType',
+        function (this: any, model: Model | null | undefined, options: Handlebars.HelperOptions): string {
+            return model?.export === 'generic' && model.base === 'string' ? options.fn(this) : options.inverse(this);
+        }
+    );
+
+    Handlebars.registerHelper(
         'notEquals',
         function (this: any, a: string, b: string, options: Handlebars.HelperOptions): string {
             return a !== b ? options.fn(this) : options.inverse(this);

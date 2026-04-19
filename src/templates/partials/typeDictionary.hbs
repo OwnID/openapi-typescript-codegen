@@ -1,5 +1,21 @@
+{{~#if dictionaryKey~}}
+{{~#isStringType dictionaryKey~}}
 {{~#if link~}}
-Record<{{#if dictionaryKey}}{{>type dictionaryKey}}{{else}}string{{/if}}, {{>type link}}>{{>isNullable}}
+Record<{{>type dictionaryKey}}, {{>type link}}>{{>isNullable}}
 {{~else~}}
-Record<{{#if dictionaryKey}}{{>type dictionaryKey}}{{else}}string{{/if}}, {{>base}}>{{>isNullable}}
+Record<{{>type dictionaryKey}}, {{>base}}>{{>isNullable}}
+{{~/if~}}
+{{~else~}}
+{{~#if link~}}
+Partial<Record<{{>type dictionaryKey}}, {{>type link}}>>{{>isNullable}}
+{{~else~}}
+Partial<Record<{{>type dictionaryKey}}, {{>base}}>>{{>isNullable}}
+{{~/if~}}
+{{~/isStringType~}}
+{{~else~}}
+{{~#if link~}}
+Record<string, {{>type link}}>{{>isNullable}}
+{{~else~}}
+Record<string, {{>base}}>{{>isNullable}}
+{{~/if~}}
 {{~/if~}}

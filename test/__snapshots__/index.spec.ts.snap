@@ -4207,7 +4207,7 @@ import type { ModelWithString } from './ModelWithString';
 /**
  * This is a dictionary with inline propertyNames
  */
-export type DictionaryWithPropertyNamesInline = Record<'foo' | 'bar', ModelWithString>;
+export type DictionaryWithPropertyNamesInline = Partial<Record<'foo' | 'bar', ModelWithString>>;
 "
 `;
 
@@ -4221,7 +4221,7 @@ import type { ModelWithString } from './ModelWithString';
 /**
  * This is a dictionary with referenced propertyNames
  */
-export type DictionaryWithPropertyNamesReference = Record<EnumWithStrings, ModelWithString>;
+export type DictionaryWithPropertyNamesReference = Partial<Record<EnumWithStrings, ModelWithString>>;
 "
 `;
 
